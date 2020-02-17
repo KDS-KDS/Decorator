@@ -1,0 +1,32 @@
+{
+    "Version": "1.0",
+    "Sections": [
+        {
+            "Name": "Options",
+            "Description": "General Options",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Options": [
+                        "None",
+                        "Default",
+                        "Custom"
+                    ],
+                    "Value": 1,
+                    "Name": "HotKeyOptions",
+                    "Description": "None - No hotkey, use console. Default - Hotkey is \"/\". Custom - Hotkey is below.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Value": "/",
+                    "Name": "HotKey",
+                    "Description": "Used only if above is \"Custom\". Only a-z recognized, defaults to \"/\".",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TextKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}
