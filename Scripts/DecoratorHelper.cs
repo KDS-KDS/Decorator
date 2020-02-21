@@ -1,4 +1,5 @@
 using DaggerfallWorkshop;
+using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Utility;
 using DaggerfallWorkshop.Utility.AssetInjection;
@@ -11,9 +12,9 @@ namespace Decorator
     {
         #region Public Methods
 
-        public static PlacedObjectData_v1 Parse(string key, Dictionary<string, string> dictionary)
+        public static PlacedObjectData_v2 Parse(string key, Dictionary<string, string> dictionary)
         {
-            PlacedObjectData_v1 data = new PlacedObjectData_v1();
+            PlacedObjectData_v2 data = new PlacedObjectData_v2();
 
             if (!dictionary.TryGetValue(key, out data.name))
             {
@@ -50,7 +51,7 @@ namespace Decorator
             return data;
         }
 
-        public static GameObject CreatePlacedObject(PlacedObjectData_v1 data, Transform parent, bool previewGo = false)
+        public static GameObject CreatePlacedObject(PlacedObjectData_v2 data, Transform parent, bool previewGo = false)
         {
             // Custom models like Handpainted Models have insanley different scales (0.0... to 200+) Set all models as a child to a parent, so
             // EditMode can uniformly scale properly.
@@ -119,7 +120,7 @@ namespace Decorator
             return parentGo;
         }
 
-        public static void SetPlacedObject(PlacedObjectData_v1 data, GameObject placedObject)
+        public static void SetPlacedObject(PlacedObjectData_v2 data, GameObject placedObject)
         {
             placedObject.GetComponent<PlacedObject>().SetData(data);
             SetLight(placedObject, data);
@@ -131,7 +132,7 @@ namespace Decorator
 
         #region Private Methods
 
-        static void SetLight(GameObject placedObject, PlacedObjectData_v1 data = null)
+        static void SetLight(GameObject placedObject, PlacedObjectData_v2 data = null)
         {
             if (data == null)
                 data = placedObject.GetComponent<PlacedObject>().GetData();
@@ -197,7 +198,7 @@ namespace Decorator
             }
         }
 
-        static void SetContainer(GameObject placedObject, PlacedObjectData_v1 data = null)
+        static void SetContainer(GameObject placedObject, PlacedObjectData_v2 data = null)
         {
             if (data == null)
                 data = placedObject.GetComponent<PlacedObject>().GetData();

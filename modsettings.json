@@ -7,14 +7,27 @@
             "IsAdvanced": false,
             "Keys": [
                 {
+                    "Value": true,
+                    "Name": "GuildRestriction",
+                    "Description": "Restrict placing spellmakers, potionmakers, and itemmakers unless you have guild access.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": "100",
+                    "Name": "PlaceObjectCost",
+                    "Description": "The cost in gold to place an object.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TextKey"
+                },
+                {
                     "Options": [
-                        "None",
                         "Default",
                         "Custom"
                     ],
-                    "Value": 1,
+                    "Value": 0,
                     "Name": "HotKeyOptions",
-                    "Description": "None - No hotkey, use console. Default - Hotkey is \"/\". Custom - Hotkey is below.",
+                    "Description": "Default - Hotkey is \"/\". Custom - Hotkey is below.",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
                 },

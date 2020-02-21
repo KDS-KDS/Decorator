@@ -5,6 +5,11 @@ using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using DaggerfallWorkshop.Game;
 using System;
 using System.Collections.Generic;
+using DaggerfallWorkshop;
+using DaggerfallWorkshop.Game.Entity;
+using DaggerfallWorkshop.Game.Banking;
+using DaggerfallConnect.Arena2;
+using DaggerfallWorkshop.Game.Guilds;
 
 namespace Decorator
 {
@@ -38,8 +43,8 @@ namespace Decorator
         Rect medButtonRect = new Rect(36f, 42f, 32f, 10f);
         Rect highButtonRect = new Rect(68f, 42f, 32f, 10f);
 
-        Rect resetButtonRect = new Rect(0.0f, 26.0f, 20f, 7f);
-        Rect deleteButtonRect = new Rect(2.0f, 34.5f, 18f, 7f);
+        Rect resetButtonRect = new Rect(0.0f, 35.0f, 20f, 7f);
+        Rect deleteButtonRect = new Rect(2.0f, 10.0f, 18f, 7f);
 
         Texture2D transformSubPanelTexture1;
         Texture2D transformSubPanelTexture2;
@@ -71,6 +76,7 @@ namespace Decorator
         Checkbox containerCheckbox;
         Checkbox potionMakerCheckbox;
         Checkbox spellMakerCheckbox;
+        Checkbox itemMakerCheckbox;
 
         // Light panel
         Rect lightPanelRect = new Rect(230.0f, 0.0f, 90.0f, 53.0f);
@@ -98,7 +104,7 @@ namespace Decorator
         GameObject previewGo;
         Light previewLight;
         BoxCollider previewCollider;
-        PlacedObjectData_v1 lastPlacedObjectData;
+        PlacedObjectData_v2 lastPlacedObjectData;
         PlayerMouseLook playerMouseLook;
 
         Vector3 defaultPosition = new Vector3(0.0f, 0.1f, 2f);
@@ -114,8 +120,11 @@ namespace Decorator
 
         KeyCode hideWindowKey;
         bool mouselookToggle = true;
-
         bool colorPickerEnabled;
+
+        bool spellRank;
+        bool potionRank;
+        bool itemRank;
 
         Dictionary<string, string> common = new Dictionary<string, string>()
         {
@@ -695,23 +704,36 @@ namespace Decorator
             deleteButton.OnMouseClick += DeleteButton_OnMouseClick;
             deleteButton.Enabled = false;
 
-            lightCheckbox = DaggerfallUI.AddCheckbox(new Vector2(78.0f, 2.0f), false, transformPanel);
+            lightCheckbox = DaggerfallUI.AddCheckbox(new Vector2(3.0f, 18.0f), false, transformPanel);
             lightCheckbox.Label.Text = "Light";
 
-            containerCheckbox = DaggerfallUI.AddCheckbox(new Vector2(78.0f, 10.0f), false, transformPanel);
+            scaleCheckBox = DaggerfallUI.AddCheckbox(new Vector2(3.0f, 26.0f), false, transformPanel);
+            scaleCheckBox.Label.Text = "Scale";
+
+            containerCheckbox = DaggerfallUI.AddCheckbox(new Vector2(75.0f, 2.0f), false, transformPanel);
             containerCheckbox.Label.Text = "Container";
             containerCheckbox.OnMouseClick += ContainerCheckbox_OnMouseClick;
 
-            potionMakerCheckbox = DaggerfallUI.AddCheckbox(new Vector2(78.0f, 18.0f), false, transformPanel);
+            potionMakerCheckbox = DaggerfallUI.AddCheckbox(new Vector2(78.0f, 10.0f), false, transformPanel);
             potionMakerCheckbox.Label.Text = "Potion";
             potionMakerCheckbox.OnMouseClick += PotionMakerCheckbox_OnMouseClick;
 
-            spellMakerCheckbox = DaggerfallUI.AddCheckbox(new Vector2(78.0f, 26.0f), false, transformPanel);
+            if (!potionRank)
+                potionMakerCheckbox.Enabled = false;
+
+            spellMakerCheckbox = DaggerfallUI.AddCheckbox(new Vector2(78.0f, 18.0f), false, transformPanel);
             spellMakerCheckbox.Label.Text = "Spell";
             spellMakerCheckbox.OnMouseClick += SpellMakerCheckbox_OnMouseClick;
 
-            scaleCheckBox = DaggerfallUI.AddCheckbox(new Vector2(78.0f, 34.0f), false, transformPanel);
-            scaleCheckBox.Label.Text = "Scale";
+            if (!spellRank)
+                spellMakerCheckbox.Enabled = false;
+
+            itemMakerCheckbox = DaggerfallUI.AddCheckbox(new Vector2(78.0f, 26.0f), false, transformPanel);
+            itemMakerCheckbox.Label.Text = "Item";
+            itemMakerCheckbox.OnMouseClick += ItemMakerCheckbox_OnMouseClick;
+
+            if (!itemRank)
+                itemMakerCheckbox.Enabled = false;
 
             // LightPanel
             lightPanel = DaggerfallUI.AddPanel(lightPanelRect);
@@ -926,6 +948,31 @@ namespace Decorator
         {
             base.OnPush();
 
+            GuildManager guildManager = GameManager.Instance.GuildManager;
+
+            if (DecoratorManager.Instance.GuildRestriction)
+            {
+                if (guildManager.GetGuild(FactionFile.GuildGroups.MagesGuild).CanAccessService(GuildServices.MakeSpells) ||
+                    guildManager.GetGuild(FactionFile.GuildGroups.HolyOrder).CanAccessService(GuildServices.MakeSpells))
+                    spellRank = true;
+
+
+                if (guildManager.GetGuild(FactionFile.GuildGroups.HolyOrder).CanAccessService(GuildServices.MakePotions) ||
+                    guildManager.GetGuild(FactionFile.GuildGroups.DarkBrotherHood).CanAccessService(GuildServices.MakePotions))
+                    potionRank = true;
+
+
+                if (guildManager.GetGuild(FactionFile.GuildGroups.HolyOrder).CanAccessService(GuildServices.MakeMagicItems) ||
+                   guildManager.GetGuild(FactionFile.GuildGroups.MagesGuild).CanAccessService(GuildServices.MakeMagicItems))
+                    itemRank = true;
+            }
+            else
+            {
+                spellRank = true;
+                potionRank = true;
+                itemRank = true;
+            }
+
             playerMouseLook = GameManager.Instance.PlayerMouseLook;
             mouselookToggle = false;
         }
@@ -974,7 +1021,7 @@ namespace Decorator
 
                     if (placedObject = hit.transform.GetComponent<PlacedObject>())
                     {
-                        PlacedObjectData_v1 placedObjectData = placedObject.GetData();
+                        PlacedObjectData_v2 placedObjectData = placedObject.GetData();
 
                         // Revert last object un-set changes
                         if (previewGo != null)
@@ -1007,12 +1054,12 @@ namespace Decorator
                         }
 
                         // Set all scale sliders and checkboxes to selected object settings
-                        if (placedObjectData.scale != Vector3.one)
+                        if (placedObjectData.localScale != Vector3.one)
                         {
                             scaleCheckBox.IsChecked = true;
-                            scaleXSlider.SetValue(placedObjectData.scale.x);
-                            scaleYSlider.SetValue(placedObjectData.scale.y);
-                            scaleZSlider.SetValue(placedObjectData.scale.z);
+                            scaleXSlider.SetValue(placedObjectData.localScale.x);
+                            scaleYSlider.SetValue(placedObjectData.localScale.y);
+                            scaleZSlider.SetValue(placedObjectData.localScale.z);
                         }
                         else
                         {
@@ -1047,15 +1094,12 @@ namespace Decorator
             }
         }
 
-        void SetPreviewGameObject(PlacedObjectData_v1 data, Transform parent)
+        void SetPreviewGameObject(PlacedObjectData_v2 data, Transform parent)
         {
             if (previewGo != null)
             {
                 if (data == lastPlacedObjectData)
-                {
-                    Debug.LogWarning("Same");
                     return;
-                }
 
                 GameObject.Destroy(previewGo);
                 ResetPreview();
@@ -1219,7 +1263,7 @@ namespace Decorator
                     }
                 }
 
-                PlacedObjectData_v1 data = new PlacedObjectData_v1();
+                PlacedObjectData_v2 data = new PlacedObjectData_v2();
 
                 data = DecoratorHelper.Parse(entry.Key, dictionary);
 
@@ -1436,12 +1480,12 @@ namespace Decorator
                 return;
 
             PlacedObject placedObject = previewGo.GetComponent<PlacedObject>();
-            PlacedObjectData_v1 data = placedObject.GetData();
+            PlacedObjectData_v2 data = placedObject.GetData();
 
             if (scaleCheckBox.IsChecked)
-                data.scale = new Vector3(scaleXSlider.GetValue(), scaleYSlider.GetValue(), scaleZSlider.GetValue());
+                data.localScale = new Vector3(scaleXSlider.GetValue(), scaleYSlider.GetValue(), scaleZSlider.GetValue());
             else
-                data.scale = Vector3.one;
+                data.localScale = Vector3.one;
 
             if (lightCheckbox.IsChecked)
             {
@@ -1483,6 +1527,9 @@ namespace Decorator
 
                     if (spellMakerCheckbox.IsChecked)
                         spellMakerCheckbox.IsChecked = false;
+
+                    if (itemMakerCheckbox.IsChecked)
+                        itemMakerCheckbox.IsChecked = false;
                 }
             }
 
@@ -1496,8 +1543,33 @@ namespace Decorator
             else
                 data.isSpellMaker = false;
 
+            if (itemMakerCheckbox.IsChecked)
+                data.isItemMaker = true;
+            else
+                data.isItemMaker = false;
+
             if (!editMode)
-                DecoratorHelper.CreatePlacedObject(data, Parent);
+            {
+                PlayerEntity playerEntity = GameManager.Instance.PlayerEntity;
+                PlayerGPS playerGPS = GameManager.Instance.PlayerGPS;
+                int amount = DecoratorManager.Instance.PlaceObjectCost;
+                int playerGold = playerEntity.GetGoldAmount();
+                int accountGold = DaggerfallBankManager.BankAccounts[playerGPS.CurrentRegionIndex].accountGold;
+                
+                if (playerGold + accountGold >= amount)
+                {
+                    amount = playerEntity.DeductGoldAmount(amount);
+                    DaggerfallBankManager.BankAccounts[playerGPS.CurrentRegionIndex].accountGold -= amount;
+
+                    // Set data position and rotation to the correct Parent, since it's currently in relation to the Player.
+                    data.localPosition = Parent.InverseTransformPoint(previewGo.transform.position);
+                    data.localRotation = Quaternion.Inverse(Parent.rotation) * previewGo.transform.rotation;
+
+                    DecoratorHelper.CreatePlacedObject(data, Parent);
+                }
+                else
+                    DaggerfallUI.MessageBox("Not enough gold.");
+            }
             else
             {
                 DecoratorHelper.SetPlacedObject(data, previewGo);
@@ -1734,6 +1806,7 @@ namespace Decorator
             {
                 potionMakerCheckbox.IsChecked = false;
                 spellMakerCheckbox.IsChecked = false;
+                itemMakerCheckbox.IsChecked = false;
             }
         }
 
@@ -1743,6 +1816,7 @@ namespace Decorator
             {
                 potionMakerCheckbox.IsChecked = false;
                 containerCheckbox.IsChecked = false;
+                itemMakerCheckbox.IsChecked = false;
             }
         }
 
@@ -1752,8 +1826,20 @@ namespace Decorator
             {
                 spellMakerCheckbox.IsChecked = false;
                 containerCheckbox.IsChecked = false;
+                itemMakerCheckbox.IsChecked = false;
             }
         }
+
+        private void ItemMakerCheckbox_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        {
+            if (itemMakerCheckbox.IsChecked)
+            {
+                spellMakerCheckbox.IsChecked = false;
+                containerCheckbox.IsChecked = false;
+                potionMakerCheckbox.IsChecked = false;
+            }
+        }
+
         private void DeleteButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
             if (previewGo == null)

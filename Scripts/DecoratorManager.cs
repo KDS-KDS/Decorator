@@ -3,6 +3,7 @@ using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Banking;
 using DaggerfallWorkshop.Game.Entity;
 using DaggerfallWorkshop.Game.Serialization;
+using DaggerfallWorkshop.Game.UserInterface;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
@@ -36,9 +37,9 @@ namespace Decorator
 
         #region Fields
 
-        Dictionary<int, PlacedObjectData_v1[]> playerHomeObjects = new Dictionary<int, PlacedObjectData_v1[]>();
-        PlacedObjectData_v1[] playerShipObjects;
-        PlacedObjectData_v1[] playerShipObjectsExterior;
+        Dictionary<int, PlacedObjectData_v2[]> playerHomeObjects = new Dictionary<int, PlacedObjectData_v2[]>();
+        PlacedObjectData_v2[] playerShipObjects;
+        PlacedObjectData_v2[] playerShipObjectsExterior;
 
         PlayerEnterExit playerEnterExit;
         PlayerGPS playerGPS;
@@ -46,6 +47,8 @@ namespace Decorator
 
         int hotKeyOption;
         string hotKey = string.Empty;
+
+        string placeObjectCost;
 
         KeyCode hotKeyKeyCode = KeyCode.None;
 
@@ -59,7 +62,7 @@ namespace Decorator
         bool inPlayerHome;
         bool inPlayerShip;
         bool inPlayerShipExterior;
-        bool loading;
+        bool loading;      
 
         #endregion
 
@@ -73,6 +76,8 @@ namespace Decorator
         string Ship1Interior { get { return DaggerfallInterior.GetSceneName(1050578, BuildingDirectory.buildingKey0); } }
         string Ship2Interior { get { return DaggerfallInterior.GetSceneName(2102157, BuildingDirectory.buildingKey0); } }
         int CurrentBuildingKey { get { return playerEnterExit.BuildingDiscoveryData.buildingKey; } }
+        public int PlaceObjectCost { get; private set; }
+        public bool GuildRestriction { get; private set; }
 
         #endregion
 
@@ -123,7 +128,7 @@ namespace Decorator
 
                 if (message == "CreateObjects")
                 {
-                    PlacedObjectData_v1[] dataArray = data as PlacedObjectData_v1[];
+                    PlacedObjectData_v2[] dataArray = data as PlacedObjectData_v2[];
 
                     CreatePlacedObjects(dataArray, Parent);
 
@@ -139,11 +144,11 @@ namespace Decorator
         {
             ModSettings settings = DecoratorModLoader.Mod.GetSettings();
 
-            hotKeyOption = settings.GetValue<int>("Options", "HotKeyOptions");
-            hotKey       = settings.GetValue<string>("Options", "HotKey");
+            hotKeyOption    = settings.GetValue<int>("Options", "HotKeyOptions");
+            hotKey          = settings.GetValue<string>("Options", "HotKey");
+            placeObjectCost = settings.GetValue<string>("Options", "PlaceObjectCost");
 
-            //potionMakerRestriction = settings.GetValue<bool>("Options", "PotionRank");
-            //spellMakerRestriction = settings.GetValue<bool>("Options", "SpellRank");
+            GuildRestriction = settings.GetValue<bool>("Options", "GuildRestriction");
 
             if (hotKeyOption == 1)
                 hotKeyKeyCode = KeyCode.Slash;
@@ -159,6 +164,21 @@ namespace Decorator
                 }
             }
 
+            try
+            {
+                PlaceObjectCost = int.Parse(placeObjectCost);
+
+                if (PlaceObjectCost < 0)
+                    PlaceObjectCost = 100;
+            }
+            catch (FormatException)
+            {
+                PlaceObjectCost = 100;
+            }
+            catch (OverflowException)
+            {
+                PlaceObjectCost = 100;
+            }
         }
 
         void Update()
@@ -242,7 +262,7 @@ namespace Decorator
                 }
                 else
                 {
-                    PlacedObjectData_v1[] value = null;
+                    PlacedObjectData_v2[] value = null;
 
                     if (playerHomeObjects.ContainsKey(CurrentBuildingKey))
                     {
@@ -306,16 +326,16 @@ namespace Decorator
 
             if (PlayerHome.childCount != 0)
             {
-                List<PlacedObjectData_v1> playerHome = new List<PlacedObjectData_v1>();
+                List<PlacedObjectData_v2> playerHome = new List<PlacedObjectData_v2>();
 
                 foreach (Transform child in PlayerHome)
                 {
-                    PlacedObjectData_v1 data = child.GetComponent<PlacedObject>().GetData();
+                    PlacedObjectData_v2 data = child.GetComponent<PlacedObject>().GetData();
                     playerHome.Add(data);
                 }
 
                 int key = lastBuildingKey;
-                PlacedObjectData_v1[] value = playerHome.ToArray();
+                PlacedObjectData_v2[] value = playerHome.ToArray();
 
                 if (playerHomeObjects.ContainsKey(key))
                     playerHomeObjects[key] = value;
@@ -330,9 +350,9 @@ namespace Decorator
                 playerShipObjectsExterior = GetObjectData(PlayerShipExterior);
         }
 
-        PlacedObjectData_v1[] GetObjectData(Transform parent)
+        PlacedObjectData_v2[] GetObjectData(Transform parent)
         {
-            List<PlacedObjectData_v1> objectList = new List<PlacedObjectData_v1>();
+            List<PlacedObjectData_v2> objectList = new List<PlacedObjectData_v2>();
             
             foreach (Transform child in parent)
             {
@@ -345,11 +365,17 @@ namespace Decorator
             return objectList.ToArray();
         }
 
-        void CreatePlacedObjects(PlacedObjectData_v1[] dataArray, Transform parent)
+        void CreatePlacedObjects(PlacedObjectData_v2[] dataArray, Transform parent)
         {
             if (dataArray != null)
-                foreach (PlacedObjectData_v1 data in dataArray)
+                foreach (PlacedObjectData_v2 data in dataArray)
+                {
+                    //// Temporary. Used to update to newer localPosition rather than using world position to place objects.
+                    //if (data.position != parent.InverseTransformPoint(data.position))
+                    //    data.localPosition = parent.InverseTransformPoint(data.position);
+
                     DecoratorHelper.CreatePlacedObject(data, parent);
+                }
         }
 
         void DestroyPlacedObjects()
@@ -433,13 +459,14 @@ namespace Decorator
 
     public class PlacedObject : MonoBehaviour , IPlayerActivable
     {
-        public uint ModelID { get; private set; }
+        uint modelID;
         int archive;
         int record;
         bool isLight;
         bool isContainer;
         bool isPotionMaker;
         bool isSpellMaker;
+        bool isItemMaker;
 
         Color lightColor;
         float lightIntensity;
@@ -450,20 +477,21 @@ namespace Decorator
 
         object lootData;
 
-        public void SetData(PlacedObjectData_v1 data)
+        public void SetData(PlacedObjectData_v2 data)
         {
-            transform.position = data.position;
-            transform.eulerAngles = data.rotation;
-            transform.localScale = data.scale;
+            transform.localPosition = data.localPosition;
+            transform.localRotation = data.localRotation;
+            transform.localScale = data.localScale;
 
             name = data.name;
-            ModelID = data.modelID;
+            modelID = data.modelID;
             archive = data.archive;
             record = data.record;
             isLight = data.isLight;
             isContainer = data.isContainer;
             isPotionMaker = data.isPotionMaker;
             isSpellMaker = data.isSpellMaker;
+            isItemMaker = data.isItemMaker;
 
             lightColor = data.lightColor;
             lightIntensity = data.lightIntensity;
@@ -475,22 +503,23 @@ namespace Decorator
             lootData = data.lootData;
         }
 
-        public PlacedObjectData_v1 GetData()
+        public PlacedObjectData_v2 GetData()
         {
-            PlacedObjectData_v1 data = new PlacedObjectData_v1();
+            PlacedObjectData_v2 data = new PlacedObjectData_v2();
 
-            data.position = transform.position;
-            data.rotation = transform.eulerAngles;
-            data.scale = transform.localScale;
+            data.localPosition = transform.localPosition;
+            data.localRotation = transform.localRotation;
+            data.localScale = transform.localScale;
             data.name = name;
 
-            data.modelID = ModelID;
+            data.modelID = modelID;
             data.archive = archive;
             data.record = record;
             data.isLight = isLight;
             data.isContainer = isContainer;
             data.isPotionMaker = isPotionMaker;
             data.isSpellMaker = isSpellMaker;
+            data.isItemMaker = isItemMaker;
 
             data.lightColor = lightColor;
             data.lightIntensity = lightIntensity;
@@ -499,8 +528,11 @@ namespace Decorator
 
             foreach (Transform child in transform)
             {
-                data.lightHorizontalRotation = child.localEulerAngles.y;
-                data.lightVerticalRotation = child.localEulerAngles.x;
+                if (child.name == name + " Light")
+                {
+                    data.lightHorizontalRotation = child.localEulerAngles.y;
+                    data.lightVerticalRotation = child.localEulerAngles.x;
+                }
             }
 
             if (isContainer)
@@ -518,10 +550,14 @@ namespace Decorator
 
         public void Activate(RaycastHit hit)
         {
+            UserInterfaceManager uiManager = DaggerfallUI.Instance.UserInterfaceManager;
+
             if (isPotionMaker)
-                DaggerfallUI.Instance.UserInterfaceManager.PushWindow(new DaggerfallPotionMakerWindow(DaggerfallUI.Instance.UserInterfaceManager));
+                uiManager.PushWindow(new DaggerfallPotionMakerWindow(uiManager));
             else if (isSpellMaker)
-                DaggerfallUI.Instance.UserInterfaceManager.PushWindow(new DaggerfallSpellMakerWindow(DaggerfallUI.Instance.UserInterfaceManager));
+                uiManager.PushWindow(new DaggerfallSpellMakerWindow(uiManager));
+            else if (isItemMaker)
+                uiManager.PushWindow(new DaggerfallItemMakerWindow(uiManager));
         }
     }
 }

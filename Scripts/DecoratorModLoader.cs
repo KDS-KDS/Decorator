@@ -34,9 +34,9 @@ namespace Decorator
     [fsObject("v1")]
     public class DecoratorSaveData : IHasModSaveData
     {
-        public Dictionary<int, PlacedObjectData_v1[]> playerHome;
-        public PlacedObjectData_v1[] playerShip;
-        public PlacedObjectData_v1[] playerShipExterior;
+        public Dictionary<int, PlacedObjectData_v2[]> playerHome;
+        public PlacedObjectData_v2[] playerShip;
+        public PlacedObjectData_v2[] playerShipExterior;
 
         public Type SaveDataType
         {
@@ -52,7 +52,7 @@ namespace Decorator
         {
             return new DecoratorSaveData
             {
-                playerHome = new Dictionary<int, PlacedObjectData_v1[]>(),
+                playerHome = new Dictionary<int, PlacedObjectData_v2[]>(),
                 playerShip = null,
                 playerShipExterior = null,
             };
@@ -81,6 +81,57 @@ namespace Decorator
         public bool isLight;
         public bool isPotionMaker;
         public bool isSpellMaker;
+        public LightType lightType;
+        public Color lightColor;
+        public float lightIntensity;
+        public float lightSpotAngle;
+        public float lightHorizontalRotation;
+        public float lightVerticalRotation;
+    }
+
+    [fsObject("v2", previousModels: typeof(PlacedObjectData_v1))]
+    public class PlacedObjectData_v2
+    {
+        public PlacedObjectData_v2()
+        { }
+
+        public PlacedObjectData_v2(PlacedObjectData_v1 oldData)
+        {
+            Debug.LogWarning("Updating old Decorator data...");
+
+            lootData = oldData.lootData;
+            localRotation = Quaternion.Euler(oldData.rotation);
+            localPosition = oldData.position;
+            localScale = oldData.scale;
+            name = oldData.name;
+            modelID = oldData.modelID;
+            archive = oldData.archive;
+            record = oldData.record;
+            isContainer = oldData.isContainer;
+            isLight = oldData.isLight;
+            isPotionMaker = oldData.isPotionMaker;
+            isSpellMaker = oldData.isSpellMaker;
+            lightType = oldData.lightType;
+            lightColor = oldData.lightColor;
+            lightIntensity = oldData.lightIntensity;
+            lightSpotAngle = oldData.lightSpotAngle;
+            lightHorizontalRotation = oldData.lightHorizontalRotation;
+            lightVerticalRotation = oldData.lightVerticalRotation;
+        }
+
+        public object lootData;
+        public Vector3 localPosition;
+        public Quaternion localRotation;
+        public Vector3 localScale;
+        public string name;
+        public uint modelID;
+        public int archive;
+        public int record;
+        public bool isContainer;
+        public bool isLight;
+        public bool isPotionMaker;
+        public bool isSpellMaker;
+        public bool isItemMaker;
         public LightType lightType;
         public Color lightColor;
         public float lightIntensity;
