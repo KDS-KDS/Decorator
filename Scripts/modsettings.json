@@ -1,0 +1,45 @@
+{
+    "Version": "1.0",
+    "Sections": [
+        {
+            "Name": "Options",
+            "Description": "General Options",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "GuildRestriction",
+                    "Description": "Restrict placing spellmakers, potionmakers, and itemmakers unless you have guild access.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": "100",
+                    "Name": "PlaceObjectCost",
+                    "Description": "The cost in gold to place an object.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TextKey"
+                },
+                {
+                    "Options": [
+                        "Default",
+                        "Custom"
+                    ],
+                    "Value": 0,
+                    "Name": "HotKeyOptions",
+                    "Description": "Default - Hotkey is \"/\". Custom - Hotkey is below.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Value": "/",
+                    "Name": "HotKey",
+                    "Description": "Used only if above is \"Custom\". Only a-z recognized, defaults to \"/\".",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TextKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}
