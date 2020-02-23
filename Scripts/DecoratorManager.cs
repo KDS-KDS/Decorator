@@ -137,6 +137,11 @@ namespace Decorator
                          
                     // });
                 }
+
+                if (message == "HotkeyRequest")
+                {
+                    callBack("HotkeyReturn", hotKeyKeyCode);
+                }
             };
         }
 
@@ -150,9 +155,9 @@ namespace Decorator
 
             GuildRestriction = settings.GetValue<bool>("Options", "GuildRestriction");
 
-            if (hotKeyOption == 1)
+            if (hotKeyOption == 0)
                 hotKeyKeyCode = KeyCode.Slash;
-            else if (hotKeyOption == 2)
+            else if (hotKeyOption == 1)
             {
                 try
                 {

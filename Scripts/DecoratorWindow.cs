@@ -748,7 +748,7 @@ namespace Decorator
             //lightFlickerCheckbox.HorizontalAlignment = HorizontalAlignment.Right;
             //lightFlickerCheckbox.Label.Text = "Flicker";
 
-            colorPicker = DaggerfallUI.AddColorPicker(new Vector2(0.0f, 18.0f), new Color32(255, 255, 255, 1), uiManager, this, lightPanel);
+            colorPicker = DaggerfallUI.AddColorPicker(new Vector2(0.0f, 18.0f), Color.white, uiManager, this, lightPanel);
             colorPicker.HorizontalAlignment = HorizontalAlignment.Right;
             colorPicker.VerticalAlignment = VerticalAlignment.Top;
             colorPicker.Label.Text = "Light Color";
@@ -1316,20 +1316,23 @@ namespace Decorator
             if (previewGo == null)
                 return;
 
+            if (setting == 0)
+                return;
+
+            Vector3 origin = previewCollider.transform.TransformPoint(previewCollider.center);
+            Vector3 originOffset = previewCollider.transform.position - origin;
+            Vector3 direction;
+
             //TODO: Medium button finds mid-point between cieling and floor. For now add a bit to default spot.
             if (setting == 2)
             {
                 Vector3 newPos = defaultPosition;
-                newPos.y += 3.0f;
+                newPos.y += 0.3f;
 
                 previewGo.transform.localPosition = lastPosition = newPos;
 
                 return;
             }
-
-            Vector3 origin = previewCollider.transform.TransformPoint(previewCollider.center);
-            Vector3 originOffset = previewCollider.transform.position - origin;
-            Vector3 direction;
 
             float yOffset = (previewCollider.size.y / 2) * previewCollider.transform.localScale.y;
 
