@@ -571,6 +571,33 @@ namespace Decorator
             {"216.47", "Chest w Gold 2" },
         };
 
+        Dictionary<string, string> statues = new Dictionary<string, string>()
+        {
+            {"-1", "Statues" },
+            {"97.0", "Statue 1" },
+            {"97.1", "Statue 2" },
+            {"97.2", "Statue 3" },
+            {"97.3", "Statue 4" },
+            {"97.4", "Statue 5" },
+            {"97.5", "Statue 6" },
+            {"97.6", "Statue 7" },
+            {"97.7", "Statue 8" },
+            {"97.8", "Statue 9" },
+            {"97.9", "Statue 10" },
+            {"97.10", "Statue 11" },
+            {"97.11", "Statue 12" },
+            {"97.13", "Statue 13" },
+            {"97.14", "Statue 14" },
+            {"97.15", "Statue 15" },
+            {"97.16", "Statue 16" },
+            {"97.17", "Statue 17" },
+            {"97.18", "Statue 18" },
+            {"97.19", "Statue 19" },
+            {"97.20", "Statue 20" },
+            {"97.21", "Statue 21" },
+        };
+
+
         List<Dictionary<string, string>> dictionaryList = new List<Dictionary<string, string>>();
 
         Dictionary<string, string> currentDictionary;
@@ -594,7 +621,7 @@ namespace Decorator
 
             Parent = parent;
 
-            dictionaryList.AddRange(new List<Dictionary<string, string>>() { common, containers, lights, wall, library, misc1, misc2, alchemy, bio, treasure });
+            dictionaryList.AddRange(new List<Dictionary<string, string>>() { common, containers, lights, wall, library, misc1, misc2, alchemy, bio, treasure, statues });
 
             hideWindowKey = InputManager.Instance.GetBinding(InputManager.Actions.Sneak);
         }
@@ -1064,20 +1091,11 @@ namespace Decorator
                             ResetScale();
                         }
 
-                        if (placedObjectData.isContainer)
-                            containerCheckbox.IsChecked = true;
-                        else
-                            containerCheckbox.IsChecked = false;
-
-                        if (placedObjectData.isPotionMaker)
-                            potionMakerCheckbox.IsChecked = true;
-                        else
-                            potionMakerCheckbox.IsChecked = false;
-
-                        if (placedObjectData.isSpellMaker)
-                            spellMakerCheckbox.IsChecked = true;
-                        else
-                            spellMakerCheckbox.IsChecked = false;
+                        // Set all special checkboxes
+                        containerCheckbox.IsChecked = placedObjectData.isContainer;
+                        potionMakerCheckbox.IsChecked = placedObjectData.isPotionMaker;
+                        spellMakerCheckbox.IsChecked = placedObjectData.isSpellMaker;
+                        itemMakerCheckbox.IsChecked = placedObjectData.isItemMaker;
 
                         DecoratorHelper.SetPlacedObject(placedObjectData, placedObject.gameObject);
 
@@ -1130,14 +1148,19 @@ namespace Decorator
         {
             float xPosition = 0f;
             float yPosition = 0f;
-            float scale = 0.7f;
+            float scale;
+
+            if (DaggerfallUnity.Settings.SDFFontRendering)
+                scale = 0.7f;
+            else
+                scale = 0.5f;
 
             foreach (Dictionary<string, string> dictionary in dictionaryList)
             {
                 string name = DecoratorHelper.Parse("-1", dictionary).name;
                 float xSize = name.Length * 3f;
 
-                if (xPosition + xSize > 120)
+                if (xPosition + xSize > mainPanel.Size.x)
                 {
                     xPosition = 0f;
                     yPosition = 10f;
@@ -1432,6 +1455,7 @@ namespace Decorator
         {
             previewGo = null;
             previewLight = null;
+            previewCollider = null;
         }
 
         void ResetLight()
@@ -1482,11 +1506,6 @@ namespace Decorator
             PlacedObject placedObject = previewGo.GetComponent<PlacedObject>();
             PlacedObjectData_v2 data = placedObject.GetData();
 
-            if (scaleCheckBox.IsChecked)
-                data.localScale = new Vector3(scaleXSlider.GetValue(), scaleYSlider.GetValue(), scaleZSlider.GetValue());
-            else
-                data.localScale = Vector3.one;
-
             if (lightCheckbox.IsChecked)
             {
                 data.isLight = true;
@@ -1509,44 +1528,31 @@ namespace Decorator
 
             if (containerCheckbox.IsChecked)
                 data.isContainer = true;
-            else
+            else if (data.isContainer == true)
             {
-                if (data.isContainer == true)
-                {
-                    string message = "You must use the Delete button to remove containers.";
+                string message = "You must use the Delete button to remove containers.";
 
-                    DaggerfallMessageBox mb = new DaggerfallMessageBox(uiManager);
-                    mb.ParentPanel.BackgroundColor = Color.clear;
-                    mb.ClickAnywhereToClose = true;
+                DaggerfallMessageBox mb = new DaggerfallMessageBox(uiManager, this);
+                mb.ParentPanel.BackgroundColor = Color.clear;
+                mb.ClickAnywhereToClose = true;
 
-                    mb.SetText(message);
-                    mb.Show();
+                mb.SetText(message);
+                mb.Show();
 
-                    if (potionMakerCheckbox.IsChecked)
-                        potionMakerCheckbox.IsChecked = false;
-
-                    if (spellMakerCheckbox.IsChecked)
-                        spellMakerCheckbox.IsChecked = false;
-
-                    if (itemMakerCheckbox.IsChecked)
-                        itemMakerCheckbox.IsChecked = false;
-                }
+                containerCheckbox.IsChecked = true;
+                potionMakerCheckbox.IsChecked = false;
+                spellMakerCheckbox.IsChecked = false;
+                itemMakerCheckbox.IsChecked = false;
             }
 
-            if (potionMakerCheckbox.IsChecked)
-                data.isPotionMaker = true;
-            else
-                data.isPotionMaker = false;
+            data.isPotionMaker = potionMakerCheckbox.IsChecked;
+            data.isSpellMaker = spellMakerCheckbox.IsChecked;
+            data.isItemMaker = itemMakerCheckbox.IsChecked;
 
-            if (spellMakerCheckbox.IsChecked)
-                data.isSpellMaker = true;
+            if (scaleCheckBox.IsChecked)
+                data.localScale = new Vector3(scaleXSlider.GetValue(), scaleYSlider.GetValue(), scaleZSlider.GetValue());
             else
-                data.isSpellMaker = false;
-
-            if (itemMakerCheckbox.IsChecked)
-                data.isItemMaker = true;
-            else
-                data.isItemMaker = false;
+                data.localScale = Vector3.one;
 
             if (!editMode)
             {
@@ -1555,7 +1561,7 @@ namespace Decorator
                 int amount = DecoratorManager.Instance.PlaceObjectCost;
                 int playerGold = playerEntity.GetGoldAmount();
                 int accountGold = DaggerfallBankManager.BankAccounts[playerGPS.CurrentRegionIndex].accountGold;
-                
+
                 if (playerGold + accountGold >= amount)
                 {
                     amount = playerEntity.DeductGoldAmount(amount);

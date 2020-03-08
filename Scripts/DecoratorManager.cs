@@ -555,14 +555,15 @@ namespace Decorator
 
         public void Activate(RaycastHit hit)
         {
-            UserInterfaceManager uiManager = DaggerfallUI.Instance.UserInterfaceManager;
+            if (!GameManager.Instance.IsPlayerOnHUD)
+                return;
 
             if (isPotionMaker)
-                uiManager.PushWindow(new DaggerfallPotionMakerWindow(uiManager));
+                DaggerfallUI.UIManager.PushWindow(new DaggerfallPotionMakerWindow(DaggerfallUI.UIManager));
             else if (isSpellMaker)
-                uiManager.PushWindow(new DaggerfallSpellMakerWindow(uiManager));
+                DaggerfallUI.UIManager.PushWindow(new DaggerfallSpellMakerWindow(DaggerfallUI.UIManager));
             else if (isItemMaker)
-                uiManager.PushWindow(new DaggerfallItemMakerWindow(uiManager));
+                DaggerfallUI.UIManager.PushWindow(new DaggerfallItemMakerWindow(DaggerfallUI.UIManager));
         }
     }
 }
