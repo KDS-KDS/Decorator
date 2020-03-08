@@ -880,10 +880,7 @@ namespace Decorator
             if (Input.GetKeyUp(hideWindowKey))
                 mouselookToggle = !mouselookToggle;
 
-            if (mouselookToggle)
-                SetMouselook(true);
-            else
-                SetMouselook(false);
+            SetMouselook(mouselookToggle);
 
             if (editMode)
                 EditMode();

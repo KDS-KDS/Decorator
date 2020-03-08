@@ -53,7 +53,7 @@ namespace Decorator
 
         public static GameObject CreatePlacedObject(PlacedObjectData_v2 data, Transform parent, bool previewGo = false)
         {
-            // Custom models like Handpainted Models have insanley different scales (0.0... to 200+) Set all models as a child to a parent, so
+            // Custom models like Handpainted Models have insanley different scales (< 0.0 to 200+) Set all models as a child to a parent, so
             // EditMode can uniformly scale properly.
 
             GameObject parentGo = new GameObject();
@@ -70,7 +70,9 @@ namespace Decorator
             }
             else
             {
-                childGo = MeshReplacement.ImportCustomGameobject(data.modelID, parentGo.transform, new Matrix4x4());
+                Matrix4x4 matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
+
+                childGo = MeshReplacement.ImportCustomGameobject(data.modelID, parentGo.transform, matrix);
 
                 if (childGo == null)
                     childGo = GameObjectHelper.CreateDaggerfallMeshGameObject(data.modelID, parentGo.transform);

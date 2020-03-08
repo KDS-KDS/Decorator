@@ -213,7 +213,7 @@ namespace Decorator
 
         void PushWindow(Transform parent)
         {
-            if (DaggerfallUI.Instance.UserInterfaceManager.TopWindow.GetType() != typeof(DecoratorWindow))
+            if (GameManager.Instance.IsPlayerOnHUD)
                 DaggerfallUI.Instance.UserInterfaceManager.PushWindow(new DecoratorWindow(DaggerfallUI.UIManager, parent));
         }
 
