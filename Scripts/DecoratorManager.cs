@@ -37,6 +37,8 @@ namespace Decorator
 
         #region Fields
 
+        public KeyCode hotKeyKeyCode = KeyCode.None;
+
         Dictionary<int, PlacedObjectData_v2[]> playerHomeObjects = new Dictionary<int, PlacedObjectData_v2[]>();
         PlacedObjectData_v2[] playerShipObjects;
         PlacedObjectData_v2[] playerShipObjectsExterior;
@@ -48,9 +50,7 @@ namespace Decorator
         int hotKeyOption;
         string hotKey = string.Empty;
 
-        string placeObjectCost;
-
-        KeyCode hotKeyKeyCode = KeyCode.None;
+        string placeObjectCost;    
 
         //private static readonly string[] shipExteriorSceneNames = new string[] {
         //    StreamingWorld.GetSceneName(shipCoords[0].X, shipCoords[0].Y),
@@ -134,7 +134,7 @@ namespace Decorator
 
                     //ModManager.Instance.SendModMessage("Airships", "ParentRequest", null, (string messageBack, object dataParent) =>
                     // {
-                         
+
                     // });
                 }
 
@@ -156,7 +156,9 @@ namespace Decorator
             GuildRestriction = settings.GetValue<bool>("Options", "GuildRestriction");
 
             if (hotKeyOption == 0)
+            {
                 hotKeyKeyCode = KeyCode.Slash;
+            }
             else if (hotKeyOption == 1)
             {
                 try
@@ -214,7 +216,13 @@ namespace Decorator
         void PushWindow(Transform parent)
         {
             if (GameManager.Instance.IsPlayerOnHUD)
-                DaggerfallUI.Instance.UserInterfaceManager.PushWindow(new DecoratorWindow(DaggerfallUI.UIManager, parent));
+            {
+                DaggerfallUI.UIManager.PushWindow(new DecoratorWindow(DaggerfallUI.UIManager, parent));
+            }
+            else if (DaggerfallUI.UIManager.TopWindow.GetType() == typeof(DecoratorWindow))
+            {
+                DaggerfallUI.UIManager.PopWindow();
+            }
         }
 
         IEnumerator Loading(PlayerEnterExit.TransitionType transitionType)
@@ -374,13 +382,7 @@ namespace Decorator
         {
             if (dataArray != null)
                 foreach (PlacedObjectData_v2 data in dataArray)
-                {
-                    //// Temporary. Used to update to newer localPosition rather than using world position to place objects.
-                    //if (data.position != parent.InverseTransformPoint(data.position))
-                    //    data.localPosition = parent.InverseTransformPoint(data.position);
-
                     DecoratorHelper.CreatePlacedObject(data, parent);
-                }
         }
 
         void DestroyPlacedObjects()

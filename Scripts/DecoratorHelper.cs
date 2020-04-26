@@ -32,20 +32,10 @@ namespace Decorator
             {
                 data.modelID = 0;
 
-                string archiveString = string.Empty;
-                string recordString = string.Empty;
+                string[] archiveRecord = key.Split('.');
 
-                for (int i = 0; i < index; i++)
-                    archiveString += key[i];
-
-                for (int i = index + 1; i < key.Length; i++)
-                    recordString += key[i];
-
-                int archive = int.Parse(archiveString);
-                int record = int.Parse(recordString);
-
-                data.archive = archive;
-                data.record = record;
+                data.archive = int.Parse(archiveRecord[0]);
+                data.record = int.Parse(archiveRecord[1]);
             }
 
             return data;
@@ -87,12 +77,16 @@ namespace Decorator
             BoxCollider parentCollider = parentGo.AddComponent<BoxCollider>();
             BoxCollider childCollider;
 
+
+            //Expanding collider a little gives better hit detection.
+            float buffer = 0.02f;
+
             // Some custom models have a box collider and are made of multiple smaller models. Get the parent collider size.
             if (childCollider = childGo.GetComponent<BoxCollider>())
             {
-                parentCollider.size   = new Vector3(childCollider.size.x * childGo.transform.localScale.x,
-                                                    childCollider.size.y * childGo.transform.localScale.y,
-                                                    childCollider.size.z * childGo.transform.localScale.z);
+                parentCollider.size   = new Vector3((childCollider.size.x * childGo.transform.localScale.x) + buffer,
+                                                    (childCollider.size.y * childGo.transform.localScale.y) + buffer,
+                                                    (childCollider.size.z * childGo.transform.localScale.z) + buffer);
 
                 parentCollider.center = new Vector3(childCollider.center.x * childGo.transform.localScale.x,
                                                     childCollider.center.y * childGo.transform.localScale.y,
@@ -105,13 +99,14 @@ namespace Decorator
             {
                 Bounds childBounds = childGo.GetComponent<MeshFilter>().sharedMesh.bounds;
 
-                parentCollider.size   = new Vector3(childBounds.size.x * childGo.transform.localScale.x,
-                                                    childBounds.size.y * childGo.transform.localScale.y,
-                                                    childBounds.size.z * childGo.transform.localScale.z);
+                parentCollider.size   = new Vector3((childBounds.size.x * childGo.transform.localScale.x) + buffer,
+                                                    (childBounds.size.y * childGo.transform.localScale.y) + buffer,
+                                                    (childBounds.size.z * childGo.transform.localScale.z) + buffer);
 
                 parentCollider.center = new Vector3(childBounds.center.x * childGo.transform.localScale.x,
                                                     childBounds.center.y * childGo.transform.localScale.y,
                                                     childBounds.center.z * childGo.transform.localScale.z);
+
             }
                 
             parentCollider.isTrigger = true;

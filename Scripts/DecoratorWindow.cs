@@ -10,6 +10,7 @@ using DaggerfallWorkshop.Game.Entity;
 using DaggerfallWorkshop.Game.Banking;
 using DaggerfallConnect.Arena2;
 using DaggerfallWorkshop.Game.Guilds;
+using UnityEditor;
 
 namespace Decorator
 {
@@ -106,6 +107,7 @@ namespace Decorator
         BoxCollider previewCollider;
         PlacedObjectData_v2 lastPlacedObjectData;
         PlayerMouseLook playerMouseLook;
+        PlayerActivate playerActivate;
 
         Vector3 defaultPosition = new Vector3(0.0f, 0.1f, 2f);
         Vector3 lastPosition = Vector3.zero;
@@ -119,7 +121,7 @@ namespace Decorator
         int pages = 1;
 
         KeyCode hideWindowKey;
-        bool mouselookToggle = true;
+        bool mouselookToggle = false;
         bool colorPickerEnabled;
 
         bool spellRank;
@@ -146,6 +148,7 @@ namespace Decorator
             {"41105", "Bench, Thick" },
             {"41106", "Bench, Thin" },
             {"41126", "Bench w Backrest" },
+            {"43307", "Bench, Park" },
 
             {"41108", "Table 1" },
             {"41109", "Table 2" },
@@ -371,8 +374,10 @@ namespace Decorator
             {"74225", "Axe" },
             {"74219", "Sickle" },
             {"74221", "Crossbow" },
+            {"99800", "Arrow" },
             {"74226", "Suit of Armor" },
             {"74231", "Marble Diamond" },
+            {"74230", "Decoration" },
             {"41700", "Stocks" },
             {"41300", "Torture 1" },
             {"41301", "Torture 2" },
@@ -385,12 +390,25 @@ namespace Decorator
             {"41222", "Fountain 2" },
             {"41239", "Cart" },
             {"41238", "Divider" },
+            {"21003", "Fence, Wood" },
+            {"60606", "Gate" },
             {"41125", "Wooden Stand" },
+            {"62315", "Column, Marble" },
+            {"61127", "Wooded Post" },
             {"41409", "Ladder" },
+            {"61132", "Steering Wheel" },
             {"41020", "Podium 1" },
             {"41021", "Podium 2" },
             {"41739", "Sign" },
             {"41703", "Booth" },
+
+            {"60719", "Rock 1" },
+            {"60720", "Rock 2" },
+            {"60712", "Rock 3" },
+            {"60612", "Rock 4" },
+            {"60715", "Rock 5" },
+            {"60716", "Rock 6" },
+            {"60613", "Rock 7" }
         };
 
         Dictionary<string, string> alchemy = new Dictionary<string, string>()
@@ -597,7 +615,6 @@ namespace Decorator
             {"97.21", "Statue 21" },
         };
 
-
         List<Dictionary<string, string>> dictionaryList = new List<Dictionary<string, string>>();
 
         Dictionary<string, string> currentDictionary;
@@ -622,8 +639,6 @@ namespace Decorator
             Parent = parent;
 
             dictionaryList.AddRange(new List<Dictionary<string, string>>() { common, containers, lights, wall, library, misc1, misc2, alchemy, bio, treasure, statues });
-
-            hideWindowKey = InputManager.Instance.GetBinding(InputManager.Actions.Sneak);
         }
 
         #endregion
@@ -891,17 +906,20 @@ namespace Decorator
         #endregion
 
         #region Unity
-
+        
         public override void Update()
         {
             base.Update();
 
+            // Prevent activating containers etc. with window open.
+            playerActivate.SetClickDelay(1.0f);
+
             if (Input.GetKeyUp(exitKey))
             {
-                if (!colorPickerEnabled)
-                    CloseWindow();
-                else
+                if (colorPickerEnabled)
+                {
                     colorPickerEnabled = false;
+                }
             }
 
             if (Input.GetKeyUp(hideWindowKey))
@@ -997,8 +1015,11 @@ namespace Decorator
                 itemRank = true;
             }
 
+            playerActivate = GameManager.Instance.PlayerActivate;
             playerMouseLook = GameManager.Instance.PlayerMouseLook;
             mouselookToggle = false;
+
+            hideWindowKey = InputManager.Instance.GetBinding(InputManager.Actions.Sneak);
         }
 
         public override void OnPop()
@@ -1036,6 +1057,9 @@ namespace Decorator
         {
             if (Input.GetMouseButtonDown(0))
             {
+                if (CheckClick())
+                    return;
+
                 RaycastHit hit;
                 Ray ray = GameManager.Instance.MainCamera.ScreenPointToRay(Input.mousePosition);
                 
@@ -1442,6 +1466,22 @@ namespace Decorator
                 DecoratorHelper.SetPlacedObject(lastPlacedObjectData, previewGo);
                 IgnoreRaycasts(previewGo);
             }
+        }
+
+        bool CheckClick()
+        {
+            if (transformPanel.MouseOverComponent     ||
+                mainPanel.MouseOverComponent          ||
+                lightPanel.MouseOverComponent         ||
+                listPanel.MouseOverComponent          ||
+                scalePanel.MouseOverComponent         ||
+                transformSubPanel1.MouseOverComponent ||
+                transformSubPanel2.MouseOverComponent)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         void ResetScale()
