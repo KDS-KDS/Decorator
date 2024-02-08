@@ -1,18 +1,16 @@
+using DaggerfallConnect;
 using DaggerfallWorkshop;
 using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Banking;
-using DaggerfallWorkshop.Game.Entity;
 using DaggerfallWorkshop.Game.Serialization;
-using DaggerfallWorkshop.Game.UserInterface;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
-using DaggerfallWorkshop.Utility;
-using DaggerfallWorkshop.Utility.AssetInjection;
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using Wenzil.Console;
 
 namespace Decorator
 {
@@ -20,8 +18,8 @@ namespace Decorator
     {
         #region Instances
 
-        static DecoratorManager instance;
-        static DecoratorSaveData saveInstance;
+        private static DecoratorManager instance;
+        private static DecoratorSaveData saveInstance;
 
         public static DecoratorManager Instance
         {
@@ -33,57 +31,80 @@ namespace Decorator
             get { return saveInstance ?? (saveInstance = new DecoratorSaveData()); }
         }
 
-        #endregion
+        #endregion Instances
 
         #region Fields
 
-        public KeyCode hotKeyKeyCode = KeyCode.None;
+        public KeyCode HotKeyKeyCode = KeyCode.None;
+        public int PlaceObjectCost;
+        public bool GuildRestriction;
+        public bool DecoratorDebug;
 
-        Dictionary<int, PlacedObjectData_v2[]> playerHomeObjects = new Dictionary<int, PlacedObjectData_v2[]>();
-        PlacedObjectData_v2[] playerShipObjects;
-        PlacedObjectData_v2[] playerShipObjectsExterior;
+        private List<DecoratorData> decoratorData = new List<DecoratorData>();
 
-        PlayerEnterExit playerEnterExit;
-        PlayerGPS playerGPS;
-        Transform Parent;
+        private PlayerEnterExit playerEnterExit;
+        private PlayerGPS playerGPS;
+        private Transform Parent;
 
-        int hotKeyOption;
-        string hotKey = string.Empty;
+        private int hotKeyOption;
+        private string hotKey = string.Empty;
+        private string placeObjectCost;
+        private bool isGameloading;
 
-        string placeObjectCost;    
-
-        //private static readonly string[] shipExteriorSceneNames = new string[] {
-        //    StreamingWorld.GetSceneName(shipCoords[0].X, shipCoords[0].Y),
-        //    StreamingWorld.GetSceneName(shipCoords[1].X, shipCoords[1].Y),
-        //};
-
-        int lastBuildingKey;
-
-        bool inPlayerHome;
-        bool inPlayerShip;
-        bool inPlayerShipExterior;
-        bool loading;      
-
-        #endregion
+        #endregion Fields
 
         #region Properties
 
-        public Transform PlayerHome { get { return transform.GetChild(0); } }
-        public Transform PlayerShip { get { return transform.GetChild(1); } }
-        public Transform PlayerShipExterior { get { return transform.GetChild(2); } }
+        public Transform InteriorTransform { get { return GameManager.Instance.PlayerEnterExit.Interior.transform; } }
         public DaggerfallAudioSource DecoratorAudio { get; private set; }
 
-        string Ship1Interior { get { return DaggerfallInterior.GetSceneName(1050578, BuildingDirectory.buildingKey0); } }
-        string Ship2Interior { get { return DaggerfallInterior.GetSceneName(2102157, BuildingDirectory.buildingKey0); } }
-        int CurrentBuildingKey { get { return playerEnterExit.BuildingDiscoveryData.buildingKey; } }
-        public int PlaceObjectCost { get; private set; }
-        public bool GuildRestriction { get; private set; }
+        public bool IsInHome
+        {
+            get
+            {
+                return playerEnterExit.IsPlayerInside && DaggerfallBankManager.IsHouseOwned(CurrentBuildingKey);
+            }
+        }
 
-        #endregion
+        public bool IsInShip
+        {
+            get
+            {
+                DFLocation location = playerGPS.CurrentLocation;
+
+                if (location.Loaded && location.Name == "Your Ship")
+                {
+                    if (playerEnterExit.IsPlayerInside)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        //private bool IsInShipExterior
+        //{
+        //    get
+        //    {
+        //        DFLocation location = playerGPS.CurrentLocation;
+
+        //        if (location.Loaded && location.Name == "Your Ship")
+        //        {
+        //            if (!playerEnterExit.IsPlayerInside)
+        //                return true;
+        //        }
+
+        //        return false;
+        //    }
+        //}
+
+        private int CurrentBuildingKey { get { return playerEnterExit.BuildingDiscoveryData.buildingKey; } }
+
+        #endregion Properties
 
         #region Unity
 
-        void Start()
+        private void Start()
         {
             playerEnterExit = GameManager.Instance.PlayerEnterExit;
             playerGPS = GameManager.Instance.PlayerGPS;
@@ -93,8 +114,18 @@ namespace Decorator
 
             SaveLoadManager.OnStartLoad += SaveLoadManager_OnStartLoad;
             SaveLoadManager.OnLoad += SaveLoadManager_OnLoad;
-            PlayerEnterExit.OnTransitionInterior += PlayerEnterExit_OnTransitionInterior;
             PlayerEnterExit.OnTransitionExterior += PlayerEnterExit_OnTransitionExterior;
+            PlayerEnterExit.OnTransitionInterior += PlayerEnterExit_OnTransitionInterior;
+            //PlayerEnterExit.OnRespawnerComplete += PlayerEnterExit_OnRespawnerComplete;
+            //StreamingWorld.OnTeleportToCoordinates += StreamingWorld_OnTeleportToCoordinates;
+
+            DaggerfallBankManager.OnSellHouse += DaggerfallBankManager_OnSellHouse;
+            DaggerfallBankManager.OnSellShip += DaggerfallBankManager_OnSellShip;
+
+            ConsoleCommandsDatabase.RegisterCommand(ToggleDecoratorDebug.name,
+                                                    ToggleDecoratorDebug.description,
+                                                    ToggleDecoratorDebug.usage,
+                                                    ToggleDecoratorDebug.Execute);
 
             DecoratorModLoader.Mod.MessageReceiver = (string message, object data, DFModMessageCallback callBack) =>
             {
@@ -130,44 +161,126 @@ namespace Decorator
                 {
                     PlacedObjectData_v2[] dataArray = data as PlacedObjectData_v2[];
 
-                    CreatePlacedObjects(dataArray, Parent);
-
-                    //ModManager.Instance.SendModMessage("Airships", "ParentRequest", null, (string messageBack, object dataParent) =>
-                    // {
-
-                    // });
+                    if (dataArray != null)
+                    {
+                        foreach (PlacedObjectData_v2 objectData in dataArray)
+                            DecoratorHelper.CreatePlacedObject(objectData, Parent);
+                    }
                 }
 
                 if (message == "HotkeyRequest")
                 {
-                    callBack("HotkeyReturn", hotKeyKeyCode);
+                    callBack("HotkeyReturn", HotKeyKeyCode);
                 }
             };
         }
 
-        void GetModSettings()
+        private void Update()
+        {
+            if (GameManager.IsGamePaused)
+                return;
+
+            if (Input.GetKeyUp(HotKeyKeyCode))
+            {
+                if (IsInHome || IsInShip)
+                {
+                    Transform parent = GetActive();
+
+                    if (parent != null)
+                        PushWindow(parent);
+                }
+            }
+        }
+
+        #endregion Unity
+
+        #region Private Methods
+
+        private Transform GetActive()
+        {
+            Transform parent = null;
+
+            foreach (DecoratorData data in decoratorData)
+            {
+                CheckOldData(data);
+
+                if (data.IsActive)
+                {
+                    parent = data.Parent;
+                    break;
+                }
+            }
+
+            // You are in a home or ship, but there is no data yet. Create new data.
+            if (parent == null)
+            {
+                DecoratorData newData = new DecoratorData
+                {
+                    RegionIndex = playerGPS.CurrentRegionIndex,
+                    BuildingKey = CurrentBuildingKey,
+                    IsShip = IsInShip,
+                };
+
+                decoratorData.Add(newData);
+                newData.SetActive(true);
+
+                parent = newData.Parent;
+            }
+
+            return parent;
+        }
+
+        private void CheckOldData(DecoratorData data)
+        {
+            if (data.RegionIndex == -1 && (CurrentBuildingKey == data.BuildingKey || (IsInShip && data.IsShip)))
+            {
+                DecoratorDebug = true;
+
+                data.RegionIndex = playerGPS.CurrentRegionIndex;
+                data.BuildingKey = CurrentBuildingKey;
+
+                data.SetActive(true);
+            }
+        }
+
+        private HouseData_v1[] GetOwnedHouses()
+        {
+            List<HouseData_v1> list = new List<HouseData_v1>();
+
+            foreach (HouseData_v1 houseData in DaggerfallBankManager.Houses)
+            {
+                if (houseData.buildingKey > 0)
+                {
+                    list.Add(houseData);
+                }
+            }
+
+            return list.ToArray();
+        }
+
+        private void GetModSettings()
         {
             ModSettings settings = DecoratorModLoader.Mod.GetSettings();
 
-            hotKeyOption    = settings.GetValue<int>("Options", "HotKeyOptions");
-            hotKey          = settings.GetValue<string>("Options", "HotKey");
+            hotKeyOption = settings.GetValue<int>("Options", "HotKeyOptions");
+            hotKey = settings.GetValue<string>("Options", "HotKey");
             placeObjectCost = settings.GetValue<string>("Options", "PlaceObjectCost");
 
             GuildRestriction = settings.GetValue<bool>("Options", "GuildRestriction");
 
             if (hotKeyOption == 0)
             {
-                hotKeyKeyCode = KeyCode.Slash;
+                HotKeyKeyCode = KeyCode.Slash;
             }
             else if (hotKeyOption == 1)
             {
                 try
                 {
-                    hotKeyKeyCode = (KeyCode)Enum.Parse(typeof(KeyCode), hotKey, true);
+                    HotKeyKeyCode = (KeyCode)Enum.Parse(typeof(KeyCode), hotKey, true);
                 }
                 catch (ArgumentException)
                 {
-                    hotKeyKeyCode = KeyCode.Slash;
+                    HotKeyKeyCode = KeyCode.Slash;
                 }
             }
 
@@ -178,195 +291,65 @@ namespace Decorator
                 if (PlaceObjectCost < 0)
                     PlaceObjectCost = 100;
             }
-            catch (FormatException)
+            catch (Exception ex)
             {
-                PlaceObjectCost = 100;
-            }
-            catch (OverflowException)
-            {
-                PlaceObjectCost = 100;
-            }
-        }
-
-        void Update()
-        {
-            if (GameManager.IsGamePaused)
-                return;
-
-            if (Input.GetKeyUp(hotKeyKeyCode))
-            {
-                Transform parent = null;
-
-                if (inPlayerHome)
-                    parent = PlayerHome;
-                else if (inPlayerShip)
-                    parent = PlayerShip;
-                else if (inPlayerShipExterior)
-                    parent = PlayerShipExterior;
-
-                if (parent != null)
-                    PushWindow(parent);
+                if (ex is FormatException || ex is OverflowException)
+                {
+                    PlaceObjectCost = 100;
+                }
             }
         }
 
-        #endregion
-
-        #region Private Methods
-
-        void PushWindow(Transform parent)
+        private void PushWindow(Transform parent)
         {
             if (GameManager.Instance.IsPlayerOnHUD)
             {
                 DaggerfallUI.UIManager.PushWindow(new DecoratorWindow(DaggerfallUI.UIManager, parent));
             }
-            else if (DaggerfallUI.UIManager.TopWindow.GetType() == typeof(DecoratorWindow))
+            else if (DaggerfallUI.UIManager.TopWindow.GetType() == typeof(DecoratorWindow) ||
+                    DaggerfallUI.UIManager.TopWindow.GetType() == typeof(DecoratorDebugWindow))
             {
                 DaggerfallUI.UIManager.PopWindow();
             }
         }
 
-        IEnumerator Loading(PlayerEnterExit.TransitionType transitionType)
+        private void CheckLocation()
         {
-            yield return new WaitUntil(() => loading == false);
-
-            Reset();
-
-            if (transitionType == PlayerEnterExit.TransitionType.ToBuildingInterior ||
-                transitionType == PlayerEnterExit.TransitionType.ToDungeonInterior)
+            if (IsInHome || IsInShip)
             {
-                CheckInterior();
-            }
-            else
-            {
-                inPlayerHome = false;
-                inPlayerShip = false;
-                inPlayerShipExterior = false;
-            }
-        }
-
-        void CheckInterior()
-        {
-            if (CurrentBuildingKey == 0)
-            {
-                Debug.LogWarning("CurrentBuildingKey == 0");
-                return;
-            }
-            else
-            {
-                if (!DaggerfallBankManager.IsHouseOwned(CurrentBuildingKey))
+                foreach (DecoratorData data in decoratorData)
                 {
-                    if (playerHomeObjects.ContainsKey(CurrentBuildingKey))
-                        playerHomeObjects.Remove(CurrentBuildingKey);
-
-                    if (DaggerfallInterior.GetSceneName(playerGPS.CurrentMapID, BuildingDirectory.buildingKey0) == Ship1Interior ||
-                        DaggerfallInterior.GetSceneName(playerGPS.CurrentMapID, BuildingDirectory.buildingKey0) == Ship2Interior)
+                    if (data.RegionIndex == playerGPS.CurrentRegionIndex &&
+                        data.BuildingKey == CurrentBuildingKey)
                     {
-                        CreatePlacedObjects(playerShipObjects, PlayerShip);
-                        inPlayerHome = false;
-                        inPlayerShip = true;
-                        inPlayerShipExterior = false;
+                        data.SetActive(true);
                     }
-                    else
+                    else if (data.IsActive)
                     {
-                        inPlayerHome = false;
-                        inPlayerShip = false;
-                        inPlayerShipExterior = false;
+                        data.SetActive(false);
                     }
                 }
-                else
-                {
-                    PlacedObjectData_v2[] value = null;
-
-                    if (playerHomeObjects.ContainsKey(CurrentBuildingKey))
-                    {
-                        playerHomeObjects.TryGetValue(CurrentBuildingKey, out value);
-                        CreatePlacedObjects(value, PlayerHome);
-                    }
-                    else
-                        playerHomeObjects.Add(CurrentBuildingKey, value);
-
-                    inPlayerHome = true;
-                    inPlayerShip = false;
-                    inPlayerShipExterior = false;
-                }
-
-                lastBuildingKey = CurrentBuildingKey;
             }
         }
 
-        //void CheckExterior()
-        //{
-        //    inPlayerHome = false;
-        //    inPlayerShip = false;
-        //    inPlayerShipExterior = false;
-
-        //    Debug.LogWarning("Check Exterior");
-
-        //    if (DaggerfallBankManager.OwnsShip)
-        //    {
-        //        Debug.LogWarning("OwnsShip");
-        //        if (playerGPS.CurrentMapPixel == DaggerfallBankManager.GetShipCoords())
-        //        {
-        //            Debug.LogWarning("ShipExterior");
-        //            CreatePlacedObjects(playerShipObjectsExterior, PlayerShipExterior);
-        //            inPlayerHome = false;
-        //            inPlayerShip = false;
-        //            inPlayerShipExterior = true;
-        //        }
-        //        else
-        //        {
-        //            Debug.LogWarning("Not at ship coords");
-        //        }
-        //    }
-        //}
-
-        void Reset()
+        private void SetOffsets()
         {
-            SetData();
-            DestroyPlacedObjects();
+            if (IsInHome || IsInShip)
+            {
+                float offset = InteriorTransform.position.y - gameObject.transform.position.y;
+                gameObject.transform.position += new Vector3(0.0f, offset, 0.0f);
+            }
+            //else if (IsInShipExterior)
+            //{
+            //    float offset = GameManager.Instance.StreamingWorld.CurrentPlayerLocationObject.transform.position.y - gameObject.transform.position.y;
+            //    gameObject.transform.position += new Vector3(0.0f, offset, 0.0f);
+            //}
         }
 
-        void SetData()
-        {
-            if (!DaggerfallBankManager.OwnsShip)
-            {
-                playerShipObjects = null;
-                playerShipObjectsExterior = null;
-            }
-
-            if (DaggerfallBankManager.Houses.Length < 1)
-                playerHomeObjects.Clear();
-
-            if (PlayerHome.childCount != 0)
-            {
-                List<PlacedObjectData_v2> playerHome = new List<PlacedObjectData_v2>();
-
-                foreach (Transform child in PlayerHome)
-                {
-                    PlacedObjectData_v2 data = child.GetComponent<PlacedObject>().GetData();
-                    playerHome.Add(data);
-                }
-
-                int key = lastBuildingKey;
-                PlacedObjectData_v2[] value = playerHome.ToArray();
-
-                if (playerHomeObjects.ContainsKey(key))
-                    playerHomeObjects[key] = value;
-                else
-                    playerHomeObjects.Add(key, value);
-            }
-
-            if (PlayerShip.childCount != 0)
-                playerShipObjects = GetObjectData(PlayerShip);
-
-            if (PlayerShipExterior.childCount != 0)
-                playerShipObjectsExterior = GetObjectData(PlayerShipExterior);
-        }
-
-        PlacedObjectData_v2[] GetObjectData(Transform parent)
+        private PlacedObjectData_v2[] GetObjectData(Transform parent)
         {
             List<PlacedObjectData_v2> objectList = new List<PlacedObjectData_v2>();
-            
+
             foreach (Transform child in parent)
             {
                 PlacedObject placedObject;
@@ -378,111 +361,259 @@ namespace Decorator
             return objectList.ToArray();
         }
 
-        void CreatePlacedObjects(PlacedObjectData_v2[] dataArray, Transform parent)
-        {
-            if (dataArray != null)
-                foreach (PlacedObjectData_v2 data in dataArray)
-                    DecoratorHelper.CreatePlacedObject(data, parent);
-        }
-
-        void DestroyPlacedObjects()
-        {
-            if (PlayerHome.childCount > 0)
-                foreach (Transform child in PlayerHome)
-                    Destroy(child.gameObject);
-
-            if (PlayerShip.childCount > 0)
-                foreach (Transform child in PlayerShip)
-                    Destroy(child.gameObject);
-
-            if (PlayerShipExterior.childCount > 0)
-                foreach (Transform child in PlayerShipExterior)
-                    Destroy(child.gameObject);
-        }
-
-        #endregion
+        #endregion Private Methods
 
         #region Events
 
-        private void SaveLoadManager_OnStartLoad(SaveData_v1 saveData)
+        private void PlayerEnterExit_OnTransitionInterior(PlayerEnterExit.TransitionEventArgs args)
         {
-            loading = true;
-        }
+            if (isGameloading)
+                return;
 
-        private void SaveLoadManager_OnLoad(SaveData_v1 saveData)
-        {
-            loading = false;
+            SetOffsets();
+            CheckLocation();
         }
 
         private void PlayerEnterExit_OnTransitionExterior(PlayerEnterExit.TransitionEventArgs args)
         {
-            StartCoroutine(Loading(args.TransitionType));
+            if (isGameloading)
+                return;
+
+            RemoveInteriors();
         }
 
-        private void PlayerEnterExit_OnTransitionInterior(PlayerEnterExit.TransitionEventArgs args)
+        private void RemoveInteriors()
         {
-            StartCoroutine(Loading(args.TransitionType));
+            foreach (DecoratorData data in decoratorData)
+            {
+                if (data.IsActive)
+                {
+                    data.SetActive(false);
+                }
+            }
         }
 
-        #endregion
+        private void SetSaveData()
+        {
+            foreach (DecoratorData data in decoratorData)
+            {
+                if (data.IsActive)
+                {
+                    data.SaveData();
+                }
+            }
+        }
+
+        private void SaveLoadManager_OnStartLoad(SaveData_v1 saveData)
+        {
+            ResetDecorator();
+            isGameloading = true;
+        }
+
+        private void SaveLoadManager_OnLoad(SaveData_v1 saveData)
+        {
+            isGameloading = false;
+            SetOffsets();
+            CheckLocation();
+        }
+
+        private void ResetDecorator()
+        {
+            DecoratorDebug = false;
+            decoratorData.Clear();
+
+            if (transform.childCount > 0)
+                foreach (Transform child in transform)
+                    Destroy(child.gameObject);
+        }
+
+        private void DaggerfallBankManager_OnSellShip(TransactionType type, TransactionResult result, int amount)
+        {
+            if (decoratorData.Count > 0)
+            {
+                foreach (DecoratorData data in decoratorData)
+                {
+                    if (data.IsShip)
+                    {
+                        decoratorData.Remove(data);
+                    }
+                }
+            }
+        }
+
+        private void DaggerfallBankManager_OnSellHouse(TransactionType type, TransactionResult result, int amount)
+        {
+            HouseData_v1[] houses = GetOwnedHouses();
+
+            bool foundHouse;
+            List<DecoratorData> dataToRemove = new List<DecoratorData>();
+
+            foreach (DecoratorData decoratorData in decoratorData)
+            {
+                if (decoratorData.RegionIndex != -1 && !decoratorData.IsShip)
+                {
+                    foundHouse = false;
+
+                    foreach (HouseData_v1 houseData in houses)
+                    {
+                        if (decoratorData.RegionIndex == houseData.regionIndex &&
+                            decoratorData.BuildingKey == houseData.buildingKey)
+                        {
+                            foundHouse = true;
+                        }
+                    }
+
+                    if (foundHouse)
+                        continue;
+                    else
+                        dataToRemove.Add(decoratorData);
+                }
+            }
+
+            if (dataToRemove.Count > 0)
+            {
+                foreach (DecoratorData data in dataToRemove)
+                    decoratorData.Remove(data);
+            }
+        }
+
+        #endregion Events
 
         #region Serialization/Deserialization
 
-        public DecoratorSaveData GetSaveData()
+        public object GetSaveData()
         {
+            SetSaveData();
+
             DecoratorSaveData saveData = new DecoratorSaveData();
 
-            SetData();
-
-            saveData.playerHome = playerHomeObjects;
-            saveData.playerShip = playerShipObjects;
-            saveData.playerShipExterior = playerShipObjectsExterior;
+            saveData.decoratorData = decoratorData.ToArray();
 
             return saveData;
         }
 
-        public void RestoreSaveData(DecoratorSaveData saveData)
+        public void RestoreSaveData(object saveData)
         {
-            DestroyPlacedObjects();
+            DecoratorSaveData decSaveData = saveData as DecoratorSaveData;
 
-            if (saveData.playerHome != null)
-                playerHomeObjects = saveData.playerHome;
-            else
-                playerHomeObjects = null;
+            if (decSaveData.decoratorData != null)
+                decoratorData = decSaveData.decoratorData.ToList();
 
-            if (saveData.playerShip != null)
-                playerShipObjects = saveData.playerShip;
-            else
-                playerShipObjects = null;
+            if (decSaveData.playerHome != null)
+            {
+                foreach (var pair in decSaveData.playerHome)
+                {
+                    DecoratorData data = new DecoratorData()
+                    {
+                        RegionIndex = -1,
+                        BuildingKey = pair.Key,
+                        ObjectData = pair.Value.ToList()
+                    };
 
-            if (saveData.playerShipExterior != null)
-                playerShipObjectsExterior = saveData.playerShipExterior;
-            else
-                playerShipObjectsExterior = null;
+                    decoratorData.Add(data);
+                }
+
+                decSaveData.playerHome = null;
+            }
+
+            if (decSaveData.playerShip != null)
+            {
+                DecoratorData data = new DecoratorData()
+                {
+                    RegionIndex = -1,
+                    BuildingKey = -1,
+                    IsShip = true,
+                    ObjectData = decSaveData.playerShip.ToList()
+                };
+
+                decoratorData.Add(data);
+
+                decSaveData.playerShip = null;
+            }
         }
 
-        #endregion
+        #endregion Serialization/Deserialization
+
+        public class DecoratorData
+        {
+            public List<PlacedObjectData_v2> ObjectData = new List<PlacedObjectData_v2>();
+            public Transform Parent;
+
+            public bool IsActive;
+            public int RegionIndex;
+            public int BuildingKey;
+            public bool IsShip;
+            public bool IsShipExterior;
+
+            public void SetActive(bool active)
+            {
+                IsActive = active;
+
+                if (active)
+                {
+                    GameObject go = new GameObject(GetName());
+                    go.transform.SetParent(instance.transform, false);
+                    Parent = go.transform;
+
+                    if (ObjectData.Count > 0)
+                    {
+                        foreach (PlacedObjectData_v2 data in ObjectData)
+                            DecoratorHelper.CreatePlacedObject(data, go.transform);
+                    }
+                }
+                else
+                {
+                    ObjectData.Clear();
+
+                    foreach (Transform child in Parent)
+                    {
+                        PlacedObjectData_v2 data = child.GetComponent<PlacedObject>().GetData();
+                        ObjectData.Add(data);
+
+                        Destroy(child.gameObject);
+                    }
+
+                    Destroy(Parent.gameObject);
+                }
+            }
+
+            public void SaveData()
+            {
+                ObjectData.Clear();
+
+                foreach (Transform child in Parent)
+                {
+                    PlacedObjectData_v2 data = child.GetComponent<PlacedObject>().GetData();
+                    ObjectData.Add(data);
+                }
+            }
+
+            public string GetName()
+            {
+                return RegionIndex.ToString() + " " + BuildingKey.ToString();
+            }
+        }
     }
 
-    public class PlacedObject : MonoBehaviour , IPlayerActivable
+    public class PlacedObject : MonoBehaviour, IPlayerActivable
     {
-        uint modelID;
-        int archive;
-        int record;
-        bool isLight;
-        bool isContainer;
-        bool isPotionMaker;
-        bool isSpellMaker;
-        bool isItemMaker;
+        private uint modelID;
+        private int archive;
+        private int record;
+        private bool isLight;
+        private bool isContainer;
+        private bool isPotionMaker;
+        private bool isSpellMaker;
+        private bool isItemMaker;
 
-        Color lightColor;
-        float lightIntensity;
-        float lightSpotAngle;
-        LightType lightType;
-        float lightHorizontalRotation;
-        float lightVerticalRotation;
+        private Color lightColor;
+        private float lightIntensity;
+        private float lightSpotAngle;
+        private LightType lightType;
+        private float lightHorizontalRotation;
+        private float lightVerticalRotation;
 
-        object lootData;
+        private object lootData;
 
         public void SetData(PlacedObjectData_v2 data)
         {
@@ -566,6 +697,20 @@ namespace Decorator
                 DaggerfallUI.UIManager.PushWindow(new DaggerfallSpellMakerWindow(DaggerfallUI.UIManager));
             else if (isItemMaker)
                 DaggerfallUI.UIManager.PushWindow(new DaggerfallItemMakerWindow(DaggerfallUI.UIManager));
+        }
+    }
+
+    public static class ToggleDecoratorDebug
+    {
+        public static readonly string name = "DecoratorDebug";
+        public static readonly string description = "Toggles visibility of the Decorator debug button.";
+        public static readonly string usage = "DecoratorDebug";
+
+        public static string Execute(params string[] args)
+        {
+            DecoratorManager.Instance.DecoratorDebug = !DecoratorManager.Instance.DecoratorDebug;
+
+            return "DecoratorDebug is now " + DecoratorManager.Instance.DecoratorDebug;
         }
     }
 }

@@ -1,12 +1,11 @@
 using DaggerfallWorkshop;
 using DaggerfallWorkshop.Game;
-using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
 using FullSerializer;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static Decorator.DecoratorManager;
 
 namespace Decorator
 {
@@ -22,11 +21,8 @@ namespace Decorator
             GameObject go = new GameObject("Decorator");
             go.AddComponent<DecoratorManager>();
             go.AddComponent<DaggerfallAudioSource>();
-            new GameObject("Player Home").transform.parent = go.transform;
-            new GameObject("Player Ship").transform.parent = go.transform;
-            new GameObject("Player Ship Exterior").transform.parent = go.transform;
 
-            Mod.SaveDataInterface = DecoratorManager.SaveInstance;
+            Mod.SaveDataInterface = SaveInstance;
             Mod.IsReady = true;
         }
     }
@@ -38,31 +34,29 @@ namespace Decorator
         public PlacedObjectData_v2[] playerShip;
         public PlacedObjectData_v2[] playerShipExterior;
 
+        public DecoratorData[] decoratorData;
+
         public Type SaveDataType
         {
             get { return typeof(DecoratorSaveData); }
-        }
-
-        public object GetSaveData()
-        {
-            return DecoratorManager.Instance.GetSaveData();
         }
 
         public object NewSaveData()
         {
             return new DecoratorSaveData
             {
-                playerHome = new Dictionary<int, PlacedObjectData_v2[]>(),
-                playerShip = null,
-                playerShipExterior = null,
+                decoratorData = null,
             };
+        }
+
+        public object GetSaveData()
+        {
+            return Instance.GetSaveData();
         }
 
         public void RestoreSaveData(object saveData)
         {
-            var myModSaveData = (DecoratorSaveData)saveData;
-
-            DecoratorManager.Instance.RestoreSaveData(myModSaveData);
+            Instance.RestoreSaveData(saveData);
         }
     }
 

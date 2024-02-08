@@ -1,9 +1,9 @@
 {
     "ModTitle": "Decorator",
-    "ModVersion": "0.1.4",
+    "ModVersion": "0.2.0",
     "ModAuthor": "Kaedius",
     "ContactInfo": "Kaedius@pm.me",
-    "DFUnity_Version": "0.10.20",
+    "DFUnity_Version": "1.0.0",
     "ModDescription": "Place objects in your player home, ship, or airship.",
     "GUID": "6ab6179e-6d27-40c7-aa6a-648b7e8d997d",
     "Files": [
@@ -12,7 +12,5 @@
         "Assets/Game/Mods/Decorator/Scripts/DecoratorModLoader.cs",
         "Assets/Game/Mods/Decorator/modsettings.json",
         "Assets/Game/Mods/Decorator/Scripts/DecoratorHelper.cs"
-    ],
-    "Contributes": null,
-    "Dependencies": null
+    ]
 }

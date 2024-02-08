@@ -1,16 +1,15 @@
-using UnityEngine;
-using DaggerfallWorkshop.Utility;
+using DaggerfallConnect.Arena2;
+using DaggerfallWorkshop;
+using DaggerfallWorkshop.Game;
+using DaggerfallWorkshop.Game.Banking;
+using DaggerfallWorkshop.Game.Entity;
+using DaggerfallWorkshop.Game.Guilds;
 using DaggerfallWorkshop.Game.UserInterface;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
-using DaggerfallWorkshop.Game;
+using DaggerfallWorkshop.Utility;
 using System;
 using System.Collections.Generic;
-using DaggerfallWorkshop;
-using DaggerfallWorkshop.Game.Entity;
-using DaggerfallWorkshop.Game.Banking;
-using DaggerfallConnect.Arena2;
-using DaggerfallWorkshop.Game.Guilds;
-using UnityEditor;
+using UnityEngine;
 
 namespace Decorator
 {
@@ -19,116 +18,122 @@ namespace Decorator
         #region Fields
 
         //Mainpanel
-        Rect mainPanelRect = new Rect(0.0f, 0.0f, 120f, 20.0f);
-        Rect listPanelRect = new Rect(0.0f, 22.0f, 120f, 150f);
+        private Rect mainPanelRect = new Rect(0.0f, 0.0f, 120f, 20.0f);
 
-        Panel mainPanel;
-        Panel listPanel;
-        LeftRightSpinner pageSpinner;
+        private Rect listPanelRect = new Rect(0.0f, 22.0f, 120f, 150f);
+
+        private Panel mainPanel;
+        private Panel listPanel;
+        private LeftRightSpinner pageSpinner;
 
         // Transform panel
-        Rect transformPanelRect = new Rect(121.0f, 0.0f, 108f, 53f);
-        Rect transformSubPanel1Rect = new Rect(0.0f, 0.0f, 108f, 41f);
-        Rect transformSubPanel2Rect = new Rect(0.0f, 41f, 108f, 12f);
-        Rect upButtonRect = new Rect(48f, 0f, 11f, 10f);
-        Rect downButtonRect = new Rect(48f, 31f, 11f, 10f);
-        Rect leftButtonRect = new Rect(30f, 15f, 10f, 11f);
-        Rect rightButtonRect = new Rect(66f, 15f, 11f, 11f);
-        Rect rotateXZRightButtonRect = new Rect(61f, 6f, 9f, 9f);
-        Rect rotateXZLeftButtonRect = new Rect(37f, 6f, 9f, 9f);
-        Rect rotateLeftButtonRect = new Rect(37f, 26f, 9f, 9f);
-        Rect rotateRightButtonRect = new Rect(61f, 26f, 9f, 9f);
-        Rect acceptButtonRect = new Rect(50f, 17f, 7f, 7f);
+        private Rect transformPanelRect = new Rect(121.0f, 0.0f, 108f, 53f);
+        private Rect transformSubPanel1Rect = new Rect(0.0f, 0.0f, 108f, 41f);
+        private Rect transformSubPanel2Rect = new Rect(0.0f, 41f, 108f, 12f);
+        private Rect upButtonRect = new Rect(48f, 0f, 11f, 10f);
+        private Rect downButtonRect = new Rect(48f, 31f, 11f, 10f);
+        private Rect leftButtonRect = new Rect(30f, 15f, 10f, 11f);
+        private Rect rightButtonRect = new Rect(66f, 15f, 11f, 11f);
+        private Rect rotateXZRightButtonRect = new Rect(61f, 6f, 9f, 9f);
+        private Rect rotateXZLeftButtonRect = new Rect(37f, 6f, 9f, 9f);
+        private Rect rotateLeftButtonRect = new Rect(37f, 26f, 9f, 9f);
+        private Rect rotateRightButtonRect = new Rect(61f, 26f, 9f, 9f);
+        private Rect acceptButtonRect = new Rect(50f, 17f, 7f, 7f);
 
-        Rect lowButtonRect = new Rect(7f, 42f, 29f, 10f);
-        Rect medButtonRect = new Rect(36f, 42f, 32f, 10f);
-        Rect highButtonRect = new Rect(68f, 42f, 32f, 10f);
+        private Rect lowButtonRect = new Rect(7f, 42f, 29f, 10f);
+        private Rect medButtonRect = new Rect(36f, 42f, 32f, 10f);
+        private Rect highButtonRect = new Rect(68f, 42f, 32f, 10f);
 
-        Rect resetButtonRect = new Rect(0.0f, 35.0f, 20f, 7f);
-        Rect deleteButtonRect = new Rect(2.0f, 10.0f, 18f, 7f);
+        private Rect resetButtonRect = new Rect(0.0f, 35.0f, 20f, 7f);
+        private Rect deleteButtonRect = new Rect(2.0f, 10.0f, 18f, 7f);
 
-        Texture2D transformSubPanelTexture1;
-        Texture2D transformSubPanelTexture2;
+        private Texture2D transformSubPanelTexture1;
+        private Texture2D transformSubPanelTexture2;
 
-        Panel transformPanel;
-        Panel transformSubPanel1;
-        Panel transformSubPanel2;
+        private Panel transformPanel;
+        private Panel transformSubPanel1;
+        private Panel transformSubPanel2;
 
-        Button upButton;
-        Button downButton;
-        Button leftButton;
-        Button rightButton;
-        Button rotateXZRightButton;
-        Button rotateXZLeftButton;
-        Button rotateLeftButton;
-        Button rotateRightButton;
-        Button acceptButton;
-        Button resetButton;
-        Button deleteButton;
+        private Button upButton;
+        private Button downButton;
+        private Button leftButton;
+        private Button rightButton;
+        private Button rotateXZRightButton;
+        private Button rotateXZLeftButton;
+        private Button rotateLeftButton;
+        private Button rotateRightButton;
+        private Button acceptButton;
+        private Button resetButton;
+        private Button deleteButton;
 
-        Button lowButton;
-        Button medButton;
-        Button highButton;
+        private Button lowButton;
+        private Button medButton;
+        private Button highButton;
 
-        Checkbox scaleCheckBox;
-        Checkbox snapCheckbox;
-        Checkbox editCheckBox;
-        Checkbox lightCheckbox;
-        Checkbox containerCheckbox;
-        Checkbox potionMakerCheckbox;
-        Checkbox spellMakerCheckbox;
-        Checkbox itemMakerCheckbox;
+        private Button debugButton;
+
+        private Checkbox scaleCheckBox;
+        private Checkbox snapCheckbox;
+        private Checkbox editCheckBox;
+        private Checkbox lightCheckbox;
+        private Checkbox containerCheckbox;
+        private Checkbox potionMakerCheckbox;
+        private Checkbox spellMakerCheckbox;
+        private Checkbox itemMakerCheckbox;
 
         // Light panel
-        Rect lightPanelRect = new Rect(230.0f, 0.0f, 90.0f, 53.0f);
+        private Rect lightPanelRect = new Rect(230.0f, 0.0f, 90.0f, 53.0f);
 
-        Panel lightPanel;
-        Checkbox lightSpotCheckbox;
+        private Panel lightPanel;
+        private Checkbox lightSpotCheckbox;
+
         //Checkbox       lightFlickerCheckbox;
-        HorizontalSlider lightIntensitySlider;
-        HorizontalSlider lightSpotAngleSlider;
-        HorizontalSlider lightHorizontalRotationSlider;
-        HorizontalSlider lightVerticalRotationSlider;
-        Button colorPicker;
+        private HorizontalSlider lightIntensitySlider;
+
+        private HorizontalSlider lightSpotAngleSlider;
+        private HorizontalSlider lightHorizontalRotationSlider;
+        private HorizontalSlider lightVerticalRotationSlider;
+        private Button colorPicker;
 
         //Scale panel
-        Rect scalePanelRect = new Rect(230.0f, 54.0f, 90.0f, 40.0f);
-        Rect scaleResetButtonRect = new Rect(0.0f, 0.0f, 25.0f, 10.0f);
+        private Rect scalePanelRect = new Rect(230.0f, 54.0f, 90.0f, 40.0f);
 
-        Panel scalePanel;
-        Button scaleResetButton;
-        HorizontalSlider scaleXSlider;
-        HorizontalSlider scaleYSlider;
-        HorizontalSlider scaleZSlider;
+        private Rect scaleResetButtonRect = new Rect(0.0f, 0.0f, 25.0f, 10.0f);
 
-        Transform Parent;
-        GameObject previewGo;
-        Light previewLight;
-        BoxCollider previewCollider;
-        PlacedObjectData_v2 lastPlacedObjectData;
-        PlayerMouseLook playerMouseLook;
-        PlayerActivate playerActivate;
+        private Panel scalePanel;
+        private Button scaleResetButton;
+        private HorizontalSlider scaleXSlider;
+        private HorizontalSlider scaleYSlider;
+        private HorizontalSlider scaleZSlider;
 
-        Vector3 defaultPosition = new Vector3(0.0f, 0.1f, 2f);
-        Vector3 lastPosition = Vector3.zero;
+        private Transform Parent;
+        private GameObject previewGo;
+        private Light previewLight;
+        private BoxCollider previewCollider;
+        private PlacedObjectData_v2 lastPlacedObjectData;
+        private PlayerMouseLook playerMouseLook;
+        private PlayerActivate playerActivate;
 
-        Ray snapRay = new Ray();
-        RaycastHit snapRayHit = new RaycastHit();
+        private Vector3 defaultPosition = new Vector3(0.0f, 0.1f, 2f);
+        private Vector3 lastPosition = Vector3.zero;
 
-        bool editMode;
-        int goHeight = 2;
-        int goRotation = 0;
-        int pages = 1;
+        private Ray snapRay = new Ray();
+        private RaycastHit snapRayHit = new RaycastHit();
 
-        KeyCode hideWindowKey;
-        bool mouselookToggle = false;
-        bool colorPickerEnabled;
+        private bool editMode;
+        private int goHeight = 2;
+        private int goRotation = 0;
+        private int pages = 1;
 
-        bool spellRank;
-        bool potionRank;
-        bool itemRank;
+        private KeyCode hideWindowKey;
+        private bool mouselookToggle = false;
+        private bool colorPickerEnabled;
 
-        Dictionary<string, string> common = new Dictionary<string, string>()
+        private bool spellRank;
+        private bool potionRank;
+        private bool itemRank;
+
+        private Dictionary<string, string> common = new Dictionary<string, string>()
         {
             {"-1", "Common" },
             {"41100", "Chair 1 , Wide" },
@@ -163,7 +168,7 @@ namespace Decorator
             {"41002", "Small Bed w. Top" },
         };
 
-        Dictionary<string, string> containers = new Dictionary<string, string>()
+        private Dictionary<string, string> containers = new Dictionary<string, string>()
         {
             {"-1", "Containers" },
             {"41803", "Small Dresser" },
@@ -195,7 +200,7 @@ namespace Decorator
             {"41812", "Chest 2" },
         };
 
-        Dictionary<string, string> lights = new Dictionary<string, string>()
+        private Dictionary<string, string> lights = new Dictionary<string, string>()
         {
             {"-1", "Lights" },
             {"210.27", "Lantern 1"},
@@ -227,7 +232,7 @@ namespace Decorator
             {"210.6", "Skull Tiki Torch" },
         };
 
-        Dictionary<string, string> wall = new Dictionary<string, string>()
+        private Dictionary<string, string> wall = new Dictionary<string, string>()
         {
             {"-1", "Wall" },
             {"51115", "Painting 1" },
@@ -288,7 +293,7 @@ namespace Decorator
             {"42571", "Tapestry 30" },
         };
 
-        Dictionary<string, string> library = new Dictionary<string, string>()
+        private Dictionary<string, string> library = new Dictionary<string, string>()
         {
             {"-1", "Library" },
             {"211.1", "Quill and Ink" },
@@ -312,7 +317,7 @@ namespace Decorator
             {"209.15", "Stack of Stone Tablets" },
         };
 
-        Dictionary<string, string> misc1 = new Dictionary<string, string>()
+        private Dictionary<string, string> misc1 = new Dictionary<string, string>()
         {
             {"-1", "Misc 1" },
             {"208.4", "Telescope" },
@@ -359,7 +364,7 @@ namespace Decorator
             {"205.26", "Chests 2" },
         };
 
-        Dictionary<string, string> misc2 = new Dictionary<string, string>()
+        private Dictionary<string, string> misc2 = new Dictionary<string, string>()
         {
             {"-1", "Misc 2" },
             {"41009", "Spinning Wheel" },
@@ -411,7 +416,7 @@ namespace Decorator
             {"60613", "Rock 7" }
         };
 
-        Dictionary<string, string> alchemy = new Dictionary<string, string>()
+        private Dictionary<string, string> alchemy = new Dictionary<string, string>()
         {
             {"-1", "Alchemy" },
             {"205.31", "Colorful Bottles" },
@@ -507,7 +512,7 @@ namespace Decorator
             {"254.71", "Ingredient 5" },
         };
 
-        Dictionary<string, string> bio = new Dictionary<string, string>()
+        private Dictionary<string, string> bio = new Dictionary<string, string>()
         {
             {"-1", "Bio" },
             {"201.0", "Horse, Brown" },
@@ -554,7 +559,7 @@ namespace Decorator
             {"41237", "a Hedge" },
         };
 
-        Dictionary<string, string> treasure = new Dictionary<string, string>()
+        private Dictionary<string, string> treasure = new Dictionary<string, string>()
         {
             {"-1", "Treasure" },
             {"200.0", "Silver Goblet" },
@@ -589,7 +594,7 @@ namespace Decorator
             {"216.47", "Chest w Gold 2" },
         };
 
-        Dictionary<string, string> statues = new Dictionary<string, string>()
+        private Dictionary<string, string> statues = new Dictionary<string, string>()
         {
             {"-1", "Statues" },
             {"97.0", "Statue 1" },
@@ -615,18 +620,20 @@ namespace Decorator
             {"97.21", "Statue 21" },
         };
 
-        List<Dictionary<string, string>> dictionaryList = new List<Dictionary<string, string>>();
+        private List<Dictionary<string, string>> dictionaryList = new List<Dictionary<string, string>>();
 
-        Dictionary<string, string> currentDictionary;
+        private Dictionary<string, string> currentDictionary;
 
-        #endregion
+        #endregion Fields
 
         #region Properties
 
-        Transform Player { get { return GameManager.Instance.PlayerObject.transform; } }
-        AudioClip ClickSound { get { return DecoratorManager.Instance.DecoratorAudio.GetAudioClip(360); } }
-        
-        #endregion
+        private Transform Player
+        { get { return GameManager.Instance.PlayerObject.transform; } }
+        private AudioClip ClickSound
+        { get { return DecoratorManager.Instance.DecoratorAudio.GetAudioClip(360); } }
+
+        #endregion Properties
 
         #region Constructor
 
@@ -641,7 +648,7 @@ namespace Decorator
             dictionaryList.AddRange(new List<Dictionary<string, string>>() { common, containers, lights, wall, library, misc1, misc2, alchemy, bio, treasure, statues });
         }
 
-        #endregion
+        #endregion Constructor
 
         #region Setup
 
@@ -678,6 +685,14 @@ namespace Decorator
 
             transformSubPanel2 = DaggerfallUI.AddPanel(transformSubPanel2Rect, transformPanel);
             transformSubPanel2.BackgroundTexture = transformSubPanelTexture2;
+
+            debugButton = DaggerfallUI.AddButton(new Vector2(73, 46), new Vector2(7, 5), transformPanel);
+            debugButton.HorizontalAlignment = HorizontalAlignment.Right;
+            debugButton.ClickSound = ClickSound;
+            debugButton.OnMouseClick += DebugButton_OnMouseClick;
+            debugButton.Label.Text = "DBG";
+            debugButton.Label.TextScale = 0.7f;
+            debugButton.Enabled = DecoratorManager.Instance.DecoratorDebug;
 
             lowButton = DaggerfallUI.AddButton(lowButtonRect, transformPanel);
             lowButton.ClickSound = ClickSound;
@@ -894,7 +909,14 @@ namespace Decorator
             GenerateButtons(dictionaryList);
         }
 
-        void LoadTextures()
+        private void DebugButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        {
+            PopWindow();
+
+            DaggerfallUI.UIManager.PushWindow(new DecoratorDebugWindow(DaggerfallUI.UIManager, Parent));
+        }
+
+        private void LoadTextures()
         {
             Rect arrowsRect = new Rect(0, 25, 108, 41);
             transformSubPanelTexture1 = ImageReader.GetSubTexture(ImageReader.GetTexture("CNFG04I0.IMG"), arrowsRect);
@@ -903,10 +925,10 @@ namespace Decorator
             transformSubPanelTexture2 = ImageReader.GetSubTexture(ImageReader.GetTexture("CNFG04I0.IMG"), positionsRect);
         }
 
-        #endregion
+        #endregion Setup
 
         #region Unity
-        
+
         public override void Update()
         {
             base.Update();
@@ -914,7 +936,7 @@ namespace Decorator
             // Prevent activating containers etc. with window open.
             playerActivate.SetClickDelay(1.0f);
 
-            if (Input.GetKeyUp(exitKey))
+            if (Input.GetKeyUp(KeyCode.Escape))
             {
                 if (colorPickerEnabled)
                 {
@@ -998,11 +1020,9 @@ namespace Decorator
                     guildManager.GetGuild(FactionFile.GuildGroups.HolyOrder).CanAccessService(GuildServices.MakeSpells))
                     spellRank = true;
 
-
                 if (guildManager.GetGuild(FactionFile.GuildGroups.HolyOrder).CanAccessService(GuildServices.MakePotions) ||
                     guildManager.GetGuild(FactionFile.GuildGroups.DarkBrotherHood).CanAccessService(GuildServices.MakePotions))
                     potionRank = true;
-
 
                 if (guildManager.GetGuild(FactionFile.GuildGroups.HolyOrder).CanAccessService(GuildServices.MakeMagicItems) ||
                    guildManager.GetGuild(FactionFile.GuildGroups.MagesGuild).CanAccessService(GuildServices.MakeMagicItems))
@@ -1049,20 +1069,34 @@ namespace Decorator
             GameManager.Instance.PauseGame(false);
         }
 
-        #endregion
+        #endregion Unity
 
         #region Private Methods
 
-        void EditMode()
+        private void EditMode()
         {
             if (Input.GetMouseButtonDown(0))
             {
                 if (CheckClick())
                     return;
 
+                Camera mainCamera = GameManager.Instance.MainCamera;
+                Vector3 screenPos = Input.mousePosition;
+
+                if (DaggerfallUnity.Settings.RetroRenderingMode > 0)
+                {
+                    // Need to scale viewport position to match actual screen area when retro rendering enabled
+                    float screenHeight = Screen.height;
+                    if (DaggerfallUI.Instance.DaggerfallHUD != null && DaggerfallUI.Instance.DaggerfallHUD.LargeHUD.Enabled && DaggerfallUnity.Settings.LargeHUDDocked)
+                        screenHeight = Screen.height - DaggerfallUI.Instance.DaggerfallHUD.LargeHUD.ScreenHeight;
+                    float xm = screenPos.x / mainCamera.targetTexture.width;
+                    float ym = screenPos.y / mainCamera.targetTexture.height;
+                    screenPos = new Vector3(Screen.width * xm, screenHeight - screenHeight * ym, Input.mousePosition.z);
+                }
+
                 RaycastHit hit;
-                Ray ray = GameManager.Instance.MainCamera.ScreenPointToRay(Input.mousePosition);
-                
+                Ray ray = GameManager.Instance.MainCamera.ScreenPointToRay(screenPos);
+
                 if (Physics.Raycast(ray, out hit, 15f))
                 {
                     PlacedObject placedObject;
@@ -1133,7 +1167,7 @@ namespace Decorator
             }
         }
 
-        void SetPreviewGameObject(PlacedObjectData_v2 data, Transform parent)
+        private void SetPreviewGameObject(PlacedObjectData_v2 data, Transform parent)
         {
             if (previewGo != null)
             {
@@ -1168,7 +1202,7 @@ namespace Decorator
             lastPlacedObjectData = data;
         }
 
-        void GenerateButtons(List<Dictionary<string, string>> dictionaryList)
+        private void GenerateButtons(List<Dictionary<string, string>> dictionaryList)
         {
             float xPosition = 0f;
             float yPosition = 0f;
@@ -1208,7 +1242,7 @@ namespace Decorator
             }
         }
 
-        void PopulateList(Dictionary<string, string> dictionary, int page)
+        private void PopulateList(Dictionary<string, string> dictionary, int page)
         {
             float listPosition = 10f;
             float yPos = 8.0f;
@@ -1355,7 +1389,7 @@ namespace Decorator
                 previewGo.transform.localPosition = lastPosition;
         }
 
-        void SetObjectHeight(int setting)
+        private void SetObjectHeight(int setting)
         {
             if (previewGo == null)
                 return;
@@ -1409,7 +1443,7 @@ namespace Decorator
             }
         }
 
-        float GetOffset()
+        private float GetOffset()
         {
             float offset;
             float xScale = previewCollider.transform.localScale.x;
@@ -1436,7 +1470,7 @@ namespace Decorator
             return offset;
         }
 
-        void GetRotation()
+        private void GetRotation()
         {
             if (goRotation == 0)
                 previewGo.transform.forward = snapRayHit.normal;
@@ -1448,7 +1482,7 @@ namespace Decorator
                 previewGo.transform.forward = Vector3.Cross(snapRayHit.normal, -Vector3.up);
         }
 
-        void ResetTransform()
+        private void ResetTransform()
         {
             if (previewGo == null)
                 return;
@@ -1468,13 +1502,13 @@ namespace Decorator
             }
         }
 
-        bool CheckClick()
+        private bool CheckClick()
         {
-            if (transformPanel.MouseOverComponent     ||
-                mainPanel.MouseOverComponent          ||
-                lightPanel.MouseOverComponent         ||
-                listPanel.MouseOverComponent          ||
-                scalePanel.MouseOverComponent         ||
+            if (transformPanel.MouseOverComponent ||
+                mainPanel.MouseOverComponent ||
+                lightPanel.MouseOverComponent ||
+                listPanel.MouseOverComponent ||
+                scalePanel.MouseOverComponent ||
                 transformSubPanel1.MouseOverComponent ||
                 transformSubPanel2.MouseOverComponent)
             {
@@ -1484,21 +1518,21 @@ namespace Decorator
             return false;
         }
 
-        void ResetScale()
+        private void ResetScale()
         {
             scaleXSlider.SetValue(1.0f);
             scaleYSlider.SetValue(1.0f);
             scaleZSlider.SetValue(1.0f);
         }
 
-        void ResetPreview()
+        private void ResetPreview()
         {
             previewGo = null;
             previewLight = null;
             previewCollider = null;
         }
 
-        void ResetLight()
+        private void ResetLight()
         {
             lightIntensitySlider.SetValue(1.0f);
             lightSpotAngleSlider.SetValue(90.0f);
@@ -1509,7 +1543,7 @@ namespace Decorator
             lightSpotCheckbox.IsChecked = false;
         }
 
-        void SetMouselook(bool setting)
+        private void SetMouselook(bool setting)
         {
             playerMouseLook.enableMouseLook = setting;
             playerMouseLook.lockCursor = setting;
@@ -1532,13 +1566,13 @@ namespace Decorator
                     IgnoreRaycasts(child.gameObject);
         }
 
-        #endregion
+        #endregion Private Methods
 
         #region Events
 
         #region Transform Panel
 
-        void AcceptButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void AcceptButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
             if (previewGo == null)
                 return;
@@ -1623,7 +1657,7 @@ namespace Decorator
             }
         }
 
-        void UpButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void UpButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
             if (previewGo == null)
                 return;
@@ -1656,7 +1690,7 @@ namespace Decorator
             }
         }
 
-        void DownButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void DownButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
             if (previewGo == null)
                 return;
@@ -1685,7 +1719,7 @@ namespace Decorator
             }
         }
 
-        void LeftButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void LeftButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
             if (previewGo == null)
                 return;
@@ -1706,7 +1740,7 @@ namespace Decorator
             }
         }
 
-        void RightButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void RightButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
             if (previewGo == null)
                 return;
@@ -1727,7 +1761,7 @@ namespace Decorator
             }
         }
 
-        void RotateXZLeftButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void RotateXZLeftButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
             if (previewGo == null)
                 return;
@@ -1742,7 +1776,7 @@ namespace Decorator
             previewGo.transform.rotation = rotation;
         }
 
-        void RotateXZRightButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void RotateXZRightButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
             if (previewGo == null)
                 return;
@@ -1757,7 +1791,7 @@ namespace Decorator
             previewGo.transform.rotation = rotation;
         }
 
-        void RotateLeftButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void RotateLeftButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
             if (previewGo == null)
                 return;
@@ -1782,7 +1816,7 @@ namespace Decorator
             }
         }
 
-        void RotateRightButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void RotateRightButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
             if (previewGo == null)
                 return;
@@ -1917,19 +1951,19 @@ namespace Decorator
             mb.Show();
         }
 
-        void LowButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void LowButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
             goHeight = 1;
             SetObjectHeight(1);
         }
 
-        void MedButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void MedButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
             goHeight = 2;
             SetObjectHeight(2);
         }
 
-        void HighButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void HighButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
             goHeight = 3;
             SetObjectHeight(3);
@@ -1973,7 +2007,7 @@ namespace Decorator
             imb.Show();
         }
 
-        #endregion
+        #endregion Transform Panel
 
         #region Main Panel
 
@@ -1995,8 +2029,220 @@ namespace Decorator
             PopulateList(currentDictionary, pageSpinner.Value);
         }
 
-        #endregion
+        #endregion Main Panel
 
-        #endregion
+        #endregion Events
+    }
+
+    public class DecoratorDebugWindow : DaggerfallPopupWindow
+    {
+        private PlayerMouseLook playerMouseLook;
+        private bool mouselookToggle;
+        private KeyCode hideWindowKey;
+
+        private Rect mainPanelRect = new Rect(0.0f, 0.0f, 70f, 85f);
+        private Panel mainPanel;
+
+        private Button upButton;
+        private Button downButton;
+
+        private Button setIncrementButton;
+
+        private Button ImportOldDataButton;
+
+        private TextLabel incrementLabel;
+        private TextLabel incrementValue;
+
+        private TextLabel lowestYLabel;
+        private TextLabel lowestYValue;
+        private TextLabel lowestYDesc;
+
+        private TextLabel currentYLabel;
+        private TextLabel currentYValue;
+
+        private Transform Parent;
+
+        private float increment = 0.1f;
+        private float lowestY;
+
+        private float fontScale = 0.9f;
+
+        public DecoratorDebugWindow(IUserInterfaceManager uiManager, Transform parent)
+        : base(uiManager)
+        {
+            ParentPanel.BackgroundColor = Color.clear;
+            PauseWhileOpen = false;
+            Parent = parent;
+        }
+
+        protected override void Setup()
+        {
+            mainPanel = DaggerfallUI.AddPanel(mainPanelRect);
+            mainPanel.HorizontalAlignment = HorizontalAlignment.Center;
+            mainPanel.VerticalAlignment = VerticalAlignment.Top;
+            mainPanel.BackgroundColor = Color.black;
+            mainPanel.Outline.Enabled = true;
+
+            upButton = DaggerfallUI.AddButton(new Vector2(2.0f, 0.0f), new Vector2(15, 10), mainPanel);
+            upButton.HorizontalAlignment = HorizontalAlignment.Center;
+            upButton.VerticalAlignment = VerticalAlignment.Top;
+            upButton.Label.Text = "Up";
+            upButton.Label.TextScale = fontScale;
+            upButton.Outline.Enabled = true;
+            upButton.OnMouseClick += upButton_OnMouseClick;
+
+            downButton = DaggerfallUI.AddButton(new Vector2(2.0f, 12.0f), new Vector2(15, 10), mainPanel);
+            downButton.HorizontalAlignment = HorizontalAlignment.Center;
+            downButton.Label.Text = "Down";
+            downButton.Label.TextScale = fontScale;
+            downButton.Outline.Enabled = true;
+            downButton.OnMouseClick += downButton_OnMouseClick;
+
+            setIncrementButton = DaggerfallUI.AddButton(new Vector2(0.0f, 35.0f), new Vector2(37, 9), mainPanel);
+            setIncrementButton.HorizontalAlignment = HorizontalAlignment.Center;
+            setIncrementButton.Label.Text = "Set Increment";
+            setIncrementButton.Label.TextScale = fontScale;
+            setIncrementButton.Outline.Enabled = true;
+            setIncrementButton.OnMouseClick += setIncrementButton_OnMouseClick;
+
+            incrementLabel = DaggerfallUI.AddTextLabel(DaggerfallUI.DefaultFont, new Vector2(0.0f, 24.0f), "Increment", mainPanel);
+            incrementLabel.HorizontalAlignment = HorizontalAlignment.Center;
+            incrementLabel.TextScale = fontScale;
+
+            incrementValue = DaggerfallUI.AddTextLabel(DaggerfallUI.DefaultFont, new Vector2(0.0f, 29.0f), "", mainPanel);
+            incrementValue.TextScale = fontScale;
+            incrementValue.HorizontalAlignment = HorizontalAlignment.Center;
+
+            lowestYLabel = DaggerfallUI.AddTextLabel(DaggerfallUI.DefaultFont, new Vector2(1.0f, 48), "Lowest Y: ", mainPanel);
+            lowestYLabel.TextScale = fontScale;
+
+            lowestYValue = DaggerfallUI.AddTextLabel(DaggerfallUI.DefaultFont, new Vector2(43.0f, 48), "", mainPanel);
+            lowestYValue.TextScale = fontScale;
+
+            currentYLabel = DaggerfallUI.AddTextLabel(DaggerfallUI.DefaultFont, new Vector2(1.0f, 55), "Target Y: ", mainPanel);
+            currentYLabel.TextScale = fontScale;
+
+            currentYValue = DaggerfallUI.AddTextLabel(DaggerfallUI.DefaultFont, new Vector2(43.0f, 55), GameManager.Instance.PlayerEnterExit.Interior.transform.position.y.ToString("0.00"), mainPanel);
+            currentYValue.TextScale = fontScale;
+
+            NativePanel.Components.Add(mainPanel);
+        }
+
+        public override void Update()
+        {
+            base.Update();
+
+            if (Input.GetKeyUp(hideWindowKey))
+                mouselookToggle = !mouselookToggle;
+
+            SetMouselook(mouselookToggle);
+
+            incrementValue.Text = increment.ToString("0.00");
+            lowestYValue.Text = lowestY.ToString("0.00");
+        }
+
+        public override void OnPush()
+        {
+            base.OnPush();
+
+            if (!DaggerfallUnity.Settings.SDFFontRendering)
+                fontScale = 0.7f;
+
+            lowestY = GetLowestY();
+
+            playerMouseLook = GameManager.Instance.PlayerMouseLook;
+            mouselookToggle = false;
+
+            hideWindowKey = InputManager.Instance.GetBinding(InputManager.Actions.Sneak);
+        }
+
+        public override void OnPop()
+        {
+            base.OnPop();
+
+            //foreach (Transform child in Parent)
+            //{
+            //    PlacedObject placedObject = child.GetComponent<PlacedObject>();
+            //    PlacedObjectData_v2 data = placedObject.GetData();
+            //    child.GetComponent<PlacedObject>().SetData(data);
+            //}
+
+            SetMouselook(true);
+        }
+
+        private float GetLowestY()
+        {
+            float lowest = float.MaxValue;
+
+            if (Parent.childCount > 0)
+            {
+                foreach (Transform child in Parent)
+                {
+                    if (child.position.y < lowest)
+                        lowest = child.position.y;
+                }
+            }
+            else
+                lowest = float.NaN;
+
+            return lowest;
+        }
+
+        private void SetMouselook(bool setting)
+        {
+            playerMouseLook.enableMouseLook = setting;
+            playerMouseLook.lockCursor = setting;
+            playerMouseLook.simpleCursorLock = !setting;
+        }
+
+        private void upButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        {
+            foreach (Transform child in Parent)
+            {
+                Vector3 newPosition = child.position;
+                newPosition.y += increment;
+                child.position = newPosition;
+            }
+
+            lowestY = GetLowestY();
+        }
+
+        private void downButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        {
+            foreach (Transform child in Parent)
+            {
+                Vector3 newPosition = child.position;
+                newPosition.y -= increment;
+                child.position = newPosition;
+            }
+
+            lowestY = GetLowestY();
+        }
+
+        private void setIncrementButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        {
+            DaggerfallInputMessageBox imb = new DaggerfallInputMessageBox(uiManager, this);
+
+            imb.SetTextBoxLabel("Value:");
+            imb.TextPanelDistanceX = 5;
+            imb.TextPanelDistanceY = 9;
+            imb.TextBox.Text = increment.ToString("0.00");
+            imb.TextBox.Numeric = true;
+            imb.TextBox.NumericMode = NumericMode.Float;
+            imb.TextBox.MaxCharacters = 6;
+
+            imb.OnGotUserInput += (_sender, input) =>
+            {
+                float value;
+
+                bool result = float.TryParse(input, out value);
+                if (!result)
+                    return;
+
+                increment = value;
+            };
+
+            imb.Show();
+        }
     }
 }

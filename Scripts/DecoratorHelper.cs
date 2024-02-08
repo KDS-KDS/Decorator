@@ -1,5 +1,6 @@
 using DaggerfallWorkshop;
 using DaggerfallWorkshop.Game;
+using DaggerfallWorkshop.Game.Items;
 using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Utility;
 using DaggerfallWorkshop.Utility.AssetInjection;
@@ -113,7 +114,7 @@ namespace Decorator
 
             parentGo.AddComponent<PlacedObject>();
             SetPlacedObject(data, parentGo);
-
+            
             return parentGo;
         }
 
