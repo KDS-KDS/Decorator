@@ -85,7 +85,7 @@ namespace Decorator
             // Some custom models have a box collider and are made of multiple smaller models. Get the parent collider size.
             if (childCollider = childGo.GetComponent<BoxCollider>())
             {
-                parentCollider.size   = new Vector3((childCollider.size.x * childGo.transform.localScale.x) + buffer,
+                parentCollider.size = new Vector3((childCollider.size.x * childGo.transform.localScale.x) + buffer,
                                                     (childCollider.size.y * childGo.transform.localScale.y) + buffer,
                                                     (childCollider.size.z * childGo.transform.localScale.z) + buffer);
 
@@ -100,7 +100,7 @@ namespace Decorator
             {
                 Bounds childBounds = childGo.GetComponent<MeshFilter>().sharedMesh.bounds;
 
-                parentCollider.size   = new Vector3((childBounds.size.x * childGo.transform.localScale.x) + buffer,
+                parentCollider.size = new Vector3((childBounds.size.x * childGo.transform.localScale.x) + buffer,
                                                     (childBounds.size.y * childGo.transform.localScale.y) + buffer,
                                                     (childBounds.size.z * childGo.transform.localScale.z) + buffer);
 
@@ -109,12 +109,12 @@ namespace Decorator
                                                     childBounds.center.z * childGo.transform.localScale.z);
 
             }
-                
+
             parentCollider.isTrigger = true;
 
             parentGo.AddComponent<PlacedObject>();
             SetPlacedObject(data, parentGo);
-            
+
             return parentGo;
         }
 
@@ -212,11 +212,11 @@ namespace Decorator
                 if (!(lootContainer = placedObject.GetComponent<SerializableLootContainer>()))
                     lootContainer = placedObject.AddComponent<SerializableLootContainer>();
 
-                loot.ContainerType = LootContainerTypes.Nothing;
-                loot.LoadID = 0;
-
                 if (data.lootData != null)
                     lootContainer.RestoreSaveData(data.lootData);
+
+                loot.LoadID = 0;
+                loot.ContainerType = LootContainerTypes.HouseContainers;
             }
             else
             {

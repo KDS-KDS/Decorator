@@ -70,9 +70,7 @@ namespace Decorator
         {
             get
             {
-                DFLocation location = playerGPS.CurrentLocation;
-
-                if (location.Loaded && location.Name == "Your Ship")
+                if (DaggerfallBankManager.OwnsShip && playerEnterExit.BuildingDiscoveryData.buildingType == DFLocation.BuildingTypes.Ship)
                 {
                     if (playerEnterExit.IsPlayerInside)
                         return true;
@@ -367,7 +365,7 @@ namespace Decorator
 
         private void PlayerEnterExit_OnTransitionInterior(PlayerEnterExit.TransitionEventArgs args)
         {
-            if (isGameloading)
+            if (SaveLoadManager.Instance.LoadInProgress)
                 return;
 
             SetOffsets();
@@ -376,7 +374,7 @@ namespace Decorator
 
         private void PlayerEnterExit_OnTransitionExterior(PlayerEnterExit.TransitionEventArgs args)
         {
-            if (isGameloading)
+            if (SaveLoadManager.Instance.LoadInProgress)
                 return;
 
             RemoveInteriors();
@@ -407,12 +405,10 @@ namespace Decorator
         private void SaveLoadManager_OnStartLoad(SaveData_v1 saveData)
         {
             ResetDecorator();
-            isGameloading = true;
         }
 
         private void SaveLoadManager_OnLoad(SaveData_v1 saveData)
         {
-            isGameloading = false;
             SetOffsets();
             CheckLocation();
         }
