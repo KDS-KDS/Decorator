@@ -769,25 +769,25 @@ namespace Decorator
 
             containerCheckbox = DaggerfallUI.AddCheckbox(new Vector2(75.0f, 2.0f), false, transformPanel);
             containerCheckbox.Label.Text = "Container";
-            containerCheckbox.OnMouseClick += ContainerCheckbox_OnMouseClick;
+            containerCheckbox.OnMouseClick += OnCheckboxClicked;
 
             potionMakerCheckbox = DaggerfallUI.AddCheckbox(new Vector2(78.0f, 10.0f), false, transformPanel);
             potionMakerCheckbox.Label.Text = "Potion";
-            potionMakerCheckbox.OnMouseClick += PotionMakerCheckbox_OnMouseClick;
+            potionMakerCheckbox.OnMouseClick += OnCheckboxClicked;
 
             if (!potionRank)
                 potionMakerCheckbox.Enabled = false;
 
             spellMakerCheckbox = DaggerfallUI.AddCheckbox(new Vector2(78.0f, 18.0f), false, transformPanel);
             spellMakerCheckbox.Label.Text = "Spell";
-            spellMakerCheckbox.OnMouseClick += SpellMakerCheckbox_OnMouseClick;
+            spellMakerCheckbox.OnMouseClick += OnCheckboxClicked;
 
             if (!spellRank)
                 spellMakerCheckbox.Enabled = false;
 
             itemMakerCheckbox = DaggerfallUI.AddCheckbox(new Vector2(78.0f, 26.0f), false, transformPanel);
             itemMakerCheckbox.Label.Text = "Item";
-            itemMakerCheckbox.OnMouseClick += ItemMakerCheckbox_OnMouseClick;
+            itemMakerCheckbox.OnMouseClick += OnCheckboxClicked;
 
             if (!itemRank)
                 itemMakerCheckbox.Enabled = false;
@@ -1083,20 +1083,26 @@ namespace Decorator
                 Camera mainCamera = GameManager.Instance.MainCamera;
                 Vector3 screenPos = Input.mousePosition;
 
+                RaycastHit hit;
+                Ray ray;
+
                 if (DaggerfallUnity.Settings.RetroRenderingMode > 0)
                 {
-                    // Need to scale viewport position to match actual screen area when retro rendering enabled
-                    float screenHeight = Screen.height;
+                    float largeHUDHeight = 0;
+
                     if (DaggerfallUI.Instance.DaggerfallHUD != null && DaggerfallUI.Instance.DaggerfallHUD.LargeHUD.Enabled && DaggerfallUnity.Settings.LargeHUDDocked)
-                        screenHeight = Screen.height - DaggerfallUI.Instance.DaggerfallHUD.LargeHUD.ScreenHeight;
-                    float xm = screenPos.x / mainCamera.targetTexture.width;
-                    float ym = screenPos.y / mainCamera.targetTexture.height;
-                    screenPos = new Vector3(Screen.width * xm, screenHeight - screenHeight * ym, Input.mousePosition.z);
+                        largeHUDHeight = DaggerfallUI.Instance.DaggerfallHUD.LargeHUD.ScreenHeight;
+
+                    float xm = Input.mousePosition.x / Screen.width;
+                    float ym = (Input.mousePosition.y - largeHUDHeight) / (Screen.height - largeHUDHeight);
+
+                    Vector2 retroMousePos = new Vector2(mainCamera.targetTexture.width * xm, mainCamera.targetTexture.height * ym);
+
+                    ray = mainCamera.ScreenPointToRay(retroMousePos);
                 }
-
-                RaycastHit hit;
-                Ray ray = GameManager.Instance.MainCamera.ScreenPointToRay(screenPos);
-
+                else
+                    ray = mainCamera.ScreenPointToRay(screenPos);
+                
                 if (Physics.Raycast(ray, out hit, 15f))
                 {
                     PlacedObject placedObject;
@@ -1874,50 +1880,29 @@ namespace Decorator
 
                 mainPanel.Enabled = true;
                 listPanel.Enabled = true;
+                scalePanel.Enabled = false;
+                lightPanel.Enabled = false;
+
+                lightCheckbox.IsChecked = false;
+                scaleCheckBox.IsChecked = false;
+                containerCheckbox.IsChecked = false;
 
                 snapCheckbox.Enabled = true;
                 deleteButton.Enabled = false;
             }
         }
 
-        private void ContainerCheckbox_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void OnSpecialCheckboxClicked(BaseScreenComponent sender, Vector2 position)
         {
-            if (containerCheckbox.IsChecked)
-            {
-                potionMakerCheckbox.IsChecked = false;
-                spellMakerCheckbox.IsChecked = false;
-                itemMakerCheckbox.IsChecked = false;
-            }
-        }
+            Checkbox clickedCheckbox = sender as Checkbox;
 
-        private void SpellMakerCheckbox_OnMouseClick(BaseScreenComponent sender, Vector2 position)
-        {
-            if (spellMakerCheckbox.IsChecked)
-            {
-                potionMakerCheckbox.IsChecked = false;
-                containerCheckbox.IsChecked = false;
-                itemMakerCheckbox.IsChecked = false;
-            }
-        }
+            if (!clickedCheckbox.IsChecked)
+                return;
 
-        private void PotionMakerCheckbox_OnMouseClick(BaseScreenComponent sender, Vector2 position)
-        {
-            if (potionMakerCheckbox.IsChecked)
-            {
-                spellMakerCheckbox.IsChecked = false;
-                containerCheckbox.IsChecked = false;
-                itemMakerCheckbox.IsChecked = false;
-            }
-        }
-
-        private void ItemMakerCheckbox_OnMouseClick(BaseScreenComponent sender, Vector2 position)
-        {
-            if (itemMakerCheckbox.IsChecked)
-            {
-                spellMakerCheckbox.IsChecked = false;
-                containerCheckbox.IsChecked = false;
-                potionMakerCheckbox.IsChecked = false;
-            }
+            containerCheckbox.IsChecked = clickedCheckbox == containerCheckbox;
+            potionMakerCheckbox.IsChecked = clickedCheckbox == potionMakerCheckbox;
+            spellMakerCheckbox.IsChecked = clickedCheckbox == spellMakerCheckbox;
+            itemMakerCheckbox.IsChecked = clickedCheckbox == itemMakerCheckbox;
         }
 
         private void DeleteButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)

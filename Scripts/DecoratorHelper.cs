@@ -1,6 +1,4 @@
 using DaggerfallWorkshop;
-using DaggerfallWorkshop.Game;
-using DaggerfallWorkshop.Game.Items;
 using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Utility;
 using DaggerfallWorkshop.Utility.AssetInjection;
@@ -44,9 +42,7 @@ namespace Decorator
 
         public static GameObject CreatePlacedObject(PlacedObjectData_v2 data, Transform parent, bool previewGo = false)
         {
-            // Custom models like Handpainted Models have insanley different scales (< 0.0 to 200+) Set all models as a child to a parent, so
-            // EditMode can uniformly scale properly.
-
+            // Set all models as a child to a parent so Edit Mode can scale properly.
             GameObject parentGo = new GameObject();
             GameObject childGo;
 
@@ -77,7 +73,7 @@ namespace Decorator
 
             BoxCollider parentCollider = parentGo.AddComponent<BoxCollider>();
             BoxCollider childCollider;
-
+            Bounds childBounds = new Bounds();
 
             //Expanding collider a little gives better hit detection.
             float buffer = 0.02f;
@@ -85,30 +81,29 @@ namespace Decorator
             // Some custom models have a box collider and are made of multiple smaller models. Get the parent collider size.
             if (childCollider = childGo.GetComponent<BoxCollider>())
             {
-                parentCollider.size = new Vector3((childCollider.size.x * childGo.transform.localScale.x) + buffer,
-                                                    (childCollider.size.y * childGo.transform.localScale.y) + buffer,
-                                                    (childCollider.size.z * childGo.transform.localScale.z) + buffer);
-
-                parentCollider.center = new Vector3(childCollider.center.x * childGo.transform.localScale.x,
-                                                    childCollider.center.y * childGo.transform.localScale.y,
-                                                    childCollider.center.z * childGo.transform.localScale.z);
+                childBounds.size = childCollider.size;
+                childBounds.center = childCollider.center;
 
                 // Child colliders screw with EditMode.
                 GameObject.Destroy(childCollider);
             }
             else
             {
-                Bounds childBounds = childGo.GetComponent<MeshFilter>().sharedMesh.bounds;
+                MeshFilter meshFilter;
 
-                parentCollider.size = new Vector3((childBounds.size.x * childGo.transform.localScale.x) + buffer,
-                                                    (childBounds.size.y * childGo.transform.localScale.y) + buffer,
-                                                    (childBounds.size.z * childGo.transform.localScale.z) + buffer);
+                if (meshFilter = childGo.GetComponent<MeshFilter>())
+                    childBounds = meshFilter.sharedMesh.bounds;
+                else
+                {
+                    SkinnedMeshRenderer skinnedMeshRenderer;
 
-                parentCollider.center = new Vector3(childBounds.center.x * childGo.transform.localScale.x,
-                                                    childBounds.center.y * childGo.transform.localScale.y,
-                                                    childBounds.center.z * childGo.transform.localScale.z);
-
+                    if (skinnedMeshRenderer = parentGo.GetComponentInChildren<SkinnedMeshRenderer>())
+                        childBounds = skinnedMeshRenderer.bounds;
+                }
             }
+
+            parentCollider.size = GetColliderSizeAndCenter(childBounds.size, childGo, buffer);
+            parentCollider.center = GetColliderSizeAndCenter(childBounds.center, childGo);
 
             parentCollider.isTrigger = true;
 
@@ -116,6 +111,15 @@ namespace Decorator
             SetPlacedObject(data, parentGo);
 
             return parentGo;
+        }
+
+        private static Vector3 GetColliderSizeAndCenter(Vector3 bounds, GameObject gameObject, float buffer = 0.0f)
+        {
+            Vector3 size = new Vector3((bounds.x * gameObject.transform.localScale.x) + buffer,
+                                       (bounds.y * gameObject.transform.localScale.y) + buffer,
+                                       (bounds.z * gameObject.transform.localScale.z) + buffer);
+
+            return size;
         }
 
         public static void SetPlacedObject(PlacedObjectData_v2 data, GameObject placedObject)
@@ -126,11 +130,11 @@ namespace Decorator
             SetLayer(placedObject);
         }
 
-        #endregion
+        #endregion Public Methods
 
         #region Private Methods
 
-        static void SetLight(GameObject placedObject, PlacedObjectData_v2 data = null)
+        private static void SetLight(GameObject placedObject, PlacedObjectData_v2 data = null)
         {
             if (data == null)
                 data = placedObject.GetComponent<PlacedObject>().GetData();
@@ -196,7 +200,7 @@ namespace Decorator
             }
         }
 
-        static void SetContainer(GameObject placedObject, PlacedObjectData_v2 data = null)
+        private static void SetContainer(GameObject placedObject, PlacedObjectData_v2 data = null)
         {
             if (data == null)
                 data = placedObject.GetComponent<PlacedObject>().GetData();
@@ -216,7 +220,8 @@ namespace Decorator
                     lootContainer.RestoreSaveData(data.lootData);
 
                 loot.LoadID = 0;
-                loot.ContainerType = LootContainerTypes.HouseContainers;
+                loot.ContainerType = LootContainerTypes.Nothing;
+                loot.ContainerImage = InventoryContainerImages.Shelves;
             }
             else
             {
@@ -227,7 +232,7 @@ namespace Decorator
             }
         }
 
-        static void SetLayer(GameObject placedObject)
+        private static void SetLayer(GameObject placedObject)
         {
             placedObject.layer = 0;
 
@@ -236,6 +241,6 @@ namespace Decorator
                     SetLayer(child.gameObject);
         }
 
-        #endregion
+        #endregion Private Methods
     }
 }
